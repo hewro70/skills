@@ -2,19 +2,14 @@
 FROM node:20-alpine AS assets
 WORKDIR /app
 
-# انسخ فقط ملفات الـ npm أولاً للاستفادة من كاش الطبقات
-COPY package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
-# استخدم npm (بدّل لـ yarn/pnpm إذا مستعملهم)
-RUN npm ci
+# Install deps with cache-friendly layers
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund
 
-# انسخ بقية السورس اللازمة للبناء
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.* .
-COPY tailwind.config.* .  # إن كان عندك
-COPY postcss.config.* .   # إن كان عندك
+# Copy the rest needed for build (rely on .dockerignore to skip heavy stuff)
+COPY . .
 
-# ابنِ أصول Vite للإنتاج (Laravel يضعها تحت public/build)
+# Build to public/build (Laravel Vite default)
 RUN npm run build
 
 # ====== Stage 2: PHP + Laravel ======
@@ -31,24 +26,21 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app
 
-# انسخ مشروع Laravel كاملاً
+# Copy Laravel project
 COPY . /app
 
-# انسخ الأصول المبنية من المرحلة الأولى إلى public/build
+# Copy built assets from Stage 1
 COPY --from=assets /app/public/build /app/public/build
 
-# ثبّت باكج PHP (بدون dev) وحسّن التحميل
+# PHP deps
 RUN composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-# جهّز .env لو ناقص (بدون caching أثناء الـ build)
+# Ensure .env exists (no cache/config at build time)
 RUN php -r "file_exists('.env') || copy('.env.example', '.env');"
-
-# (اختياري) نظّف أي نهايات CRLF في سكربتات الشِل لو عندك entrypoint.sh
-# RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 ENV PORT=8080
 
-# عند التشغيل: نظّف/ولّد المفتاح → مهاجرات (وسييد إن حبيت) → كاش → شغّل السيرفر
+# Runtime: clear caches, key, migrate (and optional seed), then serve
 CMD bash -lc "\
   php artisan config:clear || true && \
   php artisan cache:clear || true && \
