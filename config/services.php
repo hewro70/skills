@@ -36,6 +36,10 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+         'translate' => [
+         'url' => env('TRANSLATE_URL', 'https://libretranslate.com'),
+         'key' => env('TRANSLATE_KEY'),
+    ],
 
     'onesignal' => [
         'app_id' => env('ONESIGNAL_APP_ID'),

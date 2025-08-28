@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ExchangeController;
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ConversationController;
@@ -19,12 +20,19 @@ use App\Http\Controllers\Admin\ChatController;
 use App\Http\Controllers\Admin\ReviewController;
 use App\Models\Conversation;
 use App\Events\ChatMessageSent;
+use App\Http\Controllers\ReviewController as UserReviewController;
+use App\Http\Controllers\PremiumRequestController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/lang/{locale}', function (string $locale) {
+    abort_unless(in_array($locale, ['ar','en']), 404);
+    session(['app_locale' => $locale]);
+    return back();
+})->name('lang.switch');
 
 // لوحة المستخدم العامة (محميّة)
 Route::get('/dashboard', function () {
@@ -54,12 +62,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::delete('/conversations/{id}', [AdminConversationController::class, 'destroy'])->name('conversations.destroy');
 });
 
+
 /* ============================
 |  صفحات الموقع العامة
 |=============================*/
 Route::controller(ThemeController::class)->name('theme.')->group(function () {
     Route::get('/', 'index')->name('index');
-    Route::get('/skills', 'skills')->name('skills');
+    Route::get('/skills', 'index')->name('skills'); // نفس المنطق
     Route::get('/about', 'about')->name('about');
     Route::get('/contact', 'contact')->name('contact');
     Route::get('/privacyPolicy', 'privacyPolicy')->name('privacyPolicy');
@@ -69,11 +78,16 @@ Route::controller(ThemeController::class)->name('theme.')->group(function () {
 
 // نموذج التواصل (POST)
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
+// routes/web.php
+Route::post('/premium/requests', [PremiumRequestController::class, 'store'])
+    ->name('premium.requests.store')
+    ->middleware('auth');
 
 /* ============================
 |  مسارات المستخدم (بعد تسجيل الدخول)
 |=============================*/
 Route::middleware('auth')->group(function () {
+    Route::get('/premium', [\App\Http\Controllers\PremiumController::class, 'show'])->name('premium.show');
 
     // ملف المستخدم (العادي) — استخدم ProfileController (وليس Admin)
     Route::get('/myProfile', [ProfileController::class, 'myProfile'])->name('myProfile'); // ← أبقينا نسخة واحدة فقط
@@ -121,6 +135,34 @@ Route::middleware('auth')->group(function () {
         Route::post('/{conversation}/review', [ConversationController::class, 'storeReview'])->name('review.store');
     });
 });
+// routes/web.php
+
+
+Route::middleware('auth')->group(function () {
+    Route::prefix('conversations/{conversation}/exchanges')
+        ->name('conversations.exchanges.')
+        ->group(function () {
+            Route::post('/', [ExchangeController::class, 'store'])->name('store');
+            Route::post('{exchange}/accept', [ExchangeController::class, 'accept'])->name('accept');
+            Route::post('{exchange}/accept-teach-only', [ExchangeController::class, 'acceptTeachOnly'])->name('acceptTeachOnly'); // جديد
+            Route::post('{exchange}/reject', [ExchangeController::class, 'reject'])->name('reject');
+            Route::post('{exchange}/cancel', [ExchangeController::class, 'cancel'])->name('cancel');
+        });
+});
+
+// routes/web.php
+
+Route::middleware('auth')->group(function () {
+    Route::prefix('conversations/{conversation}/reviews')
+        ->name('conversations.reviews.')
+        ->group(function () {
+            Route::post('/',               [UserReviewController::class, 'store'])->name('store');
+            Route::patch('{review}',       [UserReviewController::class, 'update'])->name('update');
+            Route::patch('{review}/reply', [UserReviewController::class, 'reply'])->name('reply');
+            Route::delete('{review}',      [UserReviewController::class, 'destroy'])->name('destroy');
+        });
+});
+
 
 Route::middleware('auth')->get('/test-broadcast/{conv}', function (Conversation $conv) {
     // أنشئ رسالة تجريبية داخل هذه المحادثة

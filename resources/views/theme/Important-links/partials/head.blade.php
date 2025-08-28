@@ -22,22 +22,27 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --dark-color: #2b2d42;
-            --light-color: #f8f9fa;
-            --text-color: #495057;
-            --border-radius: 8px;
-        }
+     /* === Brand Palette Override (site-wide) === */
+/* ضع هذا بعد ملف الـ tokens الأساسي */
+:root {
+  --primary-color:   #4361ee;
+  --secondary-color: #3f37c9;
+  --accent-color:    #4895ef;        /* أو خليه var(--primary-color) */
+  --dark-color:      #2b2d42;
+  --light-color:     #f8f9fa;
 
-        body {
-            font-family: 'Tajawal', sans-serif;
-            color: var(--text-color);
-            line-height: 1.8;
-            background-color: #f5f7ff;
-        }
+  --default-color:   #495057;        /* كان: --text-color */
+  --background-color:#f5f7ff;        /* بدل الـ body hard-coded */
+  --border-radius:   8px;
+}
+
+/* استخدم المتغيّرات بدل ألوان ثابتة */
+body {
+  font-family: 'Tajawal', var(--default-font);
+  color: var(--default-color);
+  line-height: 1.8;
+  background-color: var(--background-color);
+}
 
         .privacy-header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));

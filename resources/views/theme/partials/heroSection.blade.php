@@ -1,34 +1,14 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html  dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مهارات هب - صفحة المهارات</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3f37c9;
-            --accent-color: #4895ef;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #4cc9f0;
-            --warning-color: #f72585;
-            --border-radius: 12px;
-            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            --transition: all 0.3s ease;
-        }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-            color: #334155;
-        }
+
+    <style>
+    
+
+     
 
         /* Page Title Styles */
         .page-title {
@@ -216,41 +196,8 @@
         </nav>
     </div>
 
-    <!-- Content Section -->
-    <section class="content-section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="content-card">
-                        <h3><i class="fas fa-laptop-code me-2"></i> مهارات التكنولوجيا</h3>
-                        <p>تعلم أحدث تقنيات البرمجة وتطوير الويب وتصميم تجربة المستخدم من خلال دوراتنا المتخصصة في مجال التكنولوجيا.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="content-card">
-                        <h3><i class="fas fa-chart-line me-2"></i> مهارات الأعمال</h3>
-                        <p>طور مهاراتك في إدارة الأعمال، التسويق، والقيادة من خلال برامجنا المصممة خصيصاً للمحترفين.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="content-card">
-                        <h3><i class="fas fa-palette me-2"></i> مهارات إبداعية</h3>
-                        <p>اكتشف شغفك الإبداعي من خلال دوراتنا في التصميم الجرافيكي، التصوير الفوتوغرافي، والكتابة الإبداعية.</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="content-card">
-                        <h3><i class="fas fa-language me-2"></i> مهارات لغوية</h3>
-                        <p>تعلم لغات جديدة وحسن مهاراتك اللغوية مع مدرسين مختصين وبرامج تعلم تفاعلية مصممة لتحقيق أفضل النتائج.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <!-- Bootstrap & jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         // Simple animation for page elements

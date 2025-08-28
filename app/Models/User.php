@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'about_me',
         'image_path',
+        'is_premium'        => 'bool',
     ];
 
     protected $hidden = [
@@ -112,6 +113,25 @@ class User extends Authenticatable
     /**
      * Invitations sent by this user.
      */
+      public function hasActiveSubscription(): bool
+    {
+        // إن كنت مركّب Cashier:
+        if (method_exists($this, 'subscriptions')) {
+            if ($this->subscriptions()->active()->exists()) return true;
+        }
+        // فلاغ بسيط:
+        if ($this->is_premium) return true;
+
+        // (اختياري) تاريخ انتهاء:
+        // if ($this->premium_until && now()->lt($this->premium_until)) return true;
+
+        return false;
+    }
+
+    // (اختياري) Scopes سريعة
+    public function scopePremium($q)   { $q->where('is_premium', true); }
+    public function scopeFree($q)      { $q->where('is_premium', false); }
+
     public function sentInvitations()
     {
         return $this->hasMany(Invitation::class, 'source_user_id');

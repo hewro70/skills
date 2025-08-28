@@ -1,0 +1,104 @@
+
+  .home-hero{ min-height:90svh; position:relative; padding:clamp(90px,10vw,160px) 0 80px; color:#fff; }
+  .home-hero .hero-bg{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .home-hero::before{
+    content:""; position:absolute; inset:0; background:
+      radial-gradient(1000px 600px at 75% 10%, rgba(255,255,255,.10), transparent 70%),
+      linear-gradient(180deg, rgba(0,0,0,.50), rgba(0,0,0,.28) 55%, rgba(0,0,0,.18));
+  }
+
+  /* شريط البحث */
+  .hero-search{
+    display:grid; grid-template-columns:1fr 180px 150px; gap:.6rem;
+    max-width:980px; margin-inline:auto; background:rgba(255,255,255,.10);
+    border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:.6rem;
+    backdrop-filter:blur(12px) saturate(120%); -webkit-backdrop-filter:blur(12px) saturate(120%);
+  }
+  @media (max-width: 768px){ .hero-search{ grid-template-columns:1fr; border-radius:20px; } }
+
+  .hero-search .field{ position:relative; }
+  .hero-search .field .form-control{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18);
+    border-radius:999px; color:#fff; padding:.9rem 1rem .9rem 3.5rem;
+    height:52px; padding-inline-start:4.25rem; padding-inline-end:1rem; text-align:right;
+  }
+  .hero-search .field .form-control::placeholder{ color:rgba(255,255,255,.9); }
+  .hero-search .field .form-control:focus{
+    box-shadow:0 0 0 .25rem rgba(13,110,253,.35), 0 10px 22px rgba(0,0,0,.10); outline:0;
+  }
+  .hero-search .field .form-control{-webkit-appearance:none;appearance:none;}
+
+  /* أيقونة العدسة داخل الحقل */
+  .icon-badge{
+    position:absolute; inset-inline-start:.5rem; top:50%; transform:translateY(-50%);
+    width:42px; height:42px; display:grid; place-items:center;
+    background:#fff; color:#0d6efd; border-radius:50%;
+    border:1px solid rgba(13,110,253,.15);
+    box-shadow:0 8px 18px rgba(13,110,253,.18);
+    pointer-events:none; z-index:1;
+  }
+  .icon-badge .bi{ font-size:1.05rem; }
+
+  .select-wrap select{
+    appearance:none; -webkit-appearance:none; -moz-appearance:none;
+    background:rgba(255,255,255,.12); color:#fff;
+    border:1px solid rgba(255,255,255,.20); border-radius:999px;
+    padding:.85rem 2.6rem .85rem 1rem;
+  }
+  .select-wrap{ position:relative; }
+  .select-wrap::after{
+    content:""; position:absolute; inset-inline-end:1rem; top:50%; transform:translateY(-50%);
+    width:10px; height:10px;
+    background:url("data:image/svg+xml,%3Csvg width='10' height='10' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 3l4 4 4-4' stroke='%23FFFFFF' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat center/10px 10px;
+    opacity:.9; pointer-events:none;
+  }
+  .select-wrap select option{ color:#0d1b2a; }
+
+  /* Chips */
+  .chips{ display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; }
+  .chip{
+    display:inline-flex; align-items:center; gap:.35rem;
+    padding:.45rem .8rem; border-radius:999px; font-size:.925rem;
+    background:rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.22);
+    text-decoration:none;
+  }
+  .chip:hover{ background:rgba(255,255,255,.18); color:#fff; }
+
+  /* بطاقات الإحصائيات الزجاجية */
+  .glass{ background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); text-align:center; }
+  .glass.rounded-3{ border-radius:1rem; }
+
+  /* Popular Skills grid */
+  .popular-skills .skill-card{
+    height:100%; border:1px solid rgba(0,0,0,.06); border-radius:16px; padding:16px;
+    transition:transform .15s ease, box-shadow .15s ease; background:#fff;
+  }
+  .popular-skills .skill-card:hover{ transform:translateY(-3px); box-shadow:0 10px 20px rgba(0,0,0,.08); }
+  .skill-pill{
+    display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .8rem; border-radius:999px;
+    background:#f1f5ff; color:#0d6efd; font-weight:600; font-size:.9rem;
+  }
+  .skill-type{ font-size:.78rem; color:#6b7280; }
+
+  /* زر البحث */
+  .btn-search{
+      box-shadow:0 12px 24px rgba(3, 3, 3, 0.3); 
+    display:inline-flex; align-items:center; justify-content:center; gap:.45rem;
+    height:52px; padding:0 1.1rem; border-radius:25% !important;
+    font-weight:700; letter-spacing:.2px;
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease, opacity .12s ease;
+  }
+  .btn-search i{ font-size:1.05rem; line-height:1;  box-shadow:0 12px 24px rgba(13,110,253,.30);  }
+  .btn-search:hover{  transform:translateY(-1px); box-shadow:0 12px 24px rgba(13,110,253,.30); }
+  .btn-search:active{ transform:translateY(0); }
+  .btn-search:focus-visible{ outline:0; box-shadow:0 0 0 3px rgba(255,255,255,.5), 0 0 0 6px rgba(13,110,253,.35); }
+  @media (max-width:768px){ .btn-search{ height:48px; } }
+  .btn-search >span{ color:#fff; font-weight:600; }
+
+  /* Skeleton */
+  .skeleton{ position:relative; overflow:hidden; background:#f3f4f6; border-radius:12px; min-height:120px; }
+  .skeleton::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.6), rgba(255,255,255,0));
+    transform:translateX(-100%); animation:shine 1.2s infinite;
+  }

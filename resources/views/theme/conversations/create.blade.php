@@ -48,12 +48,90 @@
 @endsection
 
 @push('styles')
-    <style>
-        .conversation-form .error-message {
-            min-height: 20px;
-        }
-    </style>
-@endpush
+<style>
+  :root{
+    --primary:#4e73df;
+    --primary-600:#3f63d8;
+    --primary-700:#2e59d9;
+    --surface:#ffffff;
+    --bg:#f6f8fc;
+    --text:#0f172a;
+    --muted:#6b7280;
+    --card-shadow:0 10px 25px rgba(17,24,39,.06), 0 2px 8px rgba(17,24,39,.04);
+    --radius:16px;
+  }
+
+  body{ background:linear-gradient(180deg,#f8faff 0%, #f6f8fc 100%); }
+
+  /* ====== Page container ====== */
+  .container.py-4{ padding-top:1.25rem !important; padding-bottom:1.25rem !important; }
+
+  /* ====== Card ====== */
+  .card{
+    border:0;
+    border-radius:var(--radius);
+    box-shadow:var(--card-shadow);
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .card-header{
+    border:0;
+    padding:1rem 1.25rem;
+    background:linear-gradient(135deg,var(--primary) 0%, var(--primary-700) 100%) !important;
+    color:#fff;
+  }
+  .card-header h4{ margin:0; font-weight:700; letter-spacing:.2px; }
+
+  .card-body{
+    background:
+      radial-gradient(80% 50% at 10% 0%, rgba(78,115,223,.05), transparent 60%),
+      radial-gradient(80% 60% at 100% 10%, rgba(62,86,214,.05), transparent 60%),
+      #fff;
+    padding:1.25rem;
+  }
+
+  /* ====== List / items ====== */
+  .list-group{ --bs-list-group-bg: transparent; }
+  .list-group-item{
+    border:0 !important;
+    border-radius:14px;
+    padding:1rem;
+    background:#fff;
+    box-shadow:0 4px 14px rgba(17,24,39,.05);
+    transition: transform .12s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .list-group-item + .list-group-item{ margin-top:.75rem; }
+  .list-group-item:hover{
+    transform: translateY(-1px);
+    box-shadow:0 10px 24px rgba(17,24,39,.08);
+    background:#f9fbff;
+  }
+
+  /* Avatar + titles */
+  .list-group-item .rounded-circle{
+    box-shadow:0 2px 8px rgba(0,0,0,.08);
+    outline:3px solid rgba(78,115,223,.08);
+  }
+  .list-group-item h6{
+    margin:0 0 .15rem;
+    font-weight:700;
+    color:var(--text);
+  }
+  .list-group-item small{ color:var(--muted) !important; }
+
+  /* ====== Textarea ====== */
+  .list-group-item textarea.form-control{
+    border-radius:12px;
+    border:1px solid #e4e8f3;
+    background:#fff;
+    transition:border .15s ease, box-shadow .15s ease, background .2s ease;
+    resize: vertical;
+    min-height: 72px;
+  }
+  .list-group-item textarea.form-control:focus{
+    border-color:#c9d6ff;
+    box-shadow:0 0 0 .25rem rgba(78,115,223,.15);
+
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

@@ -28,6 +28,11 @@ class Conversation extends Model
     {
         return $this->users()->where('user_id', '!=', auth()->id());
     }
+    public function exchanges()
+    {
+    return $this->hasMany(\App\Models\Exchange::class);
+    }
+
 
     
 }

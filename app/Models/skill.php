@@ -1,18 +1,18 @@
 <?php
 
+// app/Models/Skill.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Classification;
-use App\Models\UserSkill;
-use App\Models\Exchange;    
+use Spatie\Translatable\HasTranslations;
 
 class Skill extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTranslations;
 
     protected $fillable = ['name', 'classification_id'];
+    public $translatable = ['name'];
 
     public function classification()
     {
@@ -21,16 +21,27 @@ class Skill extends Model
 
     public function users()
     {
-        // return $this->belongsToMany(User::class, 'user_skills');
-
         return $this->belongsToMany(User::class, 'user_skills')
-                ->using(UserSkill::class)
-                ->withPivot('description')
-                ->withTimestamps();
+                    ->using(UserSkill::class)
+                    ->withPivot('description')
+                    ->withTimestamps();
     }
 
     public function exchanges()
-{
-    return $this->hasMany(Exchange::class, 'skill_id');
-}
+    {
+        return $this->hasMany(Exchange::class, 'skill_id');
+    }
+
+    /* سكوبات مساعدة */
+    public function scopeWhereNameLike($q, string $term, ?string $locale = null)
+    {
+        $locale = $locale ?? app()->getLocale();
+        return $q->where("name->$locale", 'like', "%{$term}%");
+    }
+
+    public function scopeOrderByTranslatedName($q, ?string $locale = null, string $dir = 'asc')
+    {
+        $locale = $locale ?? app()->getLocale();
+        return $q->orderByRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"$locale\"'))) $dir");
+    }
 }
