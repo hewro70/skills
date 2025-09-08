@@ -25,6 +25,8 @@ class User extends Authenticatable
         'about_me',
         'image_path',
         'is_premium'        => 'bool',
+                'is_mentor',         // 👈 جديد
+
     ];
 
     protected $hidden = [
@@ -35,22 +37,46 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'date_of_birth' => 'date',
-    ];
+                'is_mentor'         => 'bool',   // 👈
 
+    ];
+   public function scopeMentors($q) { return $q->where('is_mentor', true); }
+    public function scopeNotMentors($q) { return $q->where('is_mentor', false); }
+
+    // (اختياري) وسم جاهز للنص
+    public function getMentorBadgeAttribute(): ?string
+    {
+        return $this->is_mentor ? __('badges.mentor') : null;
+    }
     protected $appends = ['image_url'];
 
-    public function country()
-    {
-        return $this->belongsTo(Country::class);
+   
+public function country()
+{
+    return $this->belongsTo(\App\Models\Country::class)->withDefault();
+}
+
+/**
+ * نص موقع المستخدم (الدولة) بلغة الواجهة
+ */public function getLocationTextAttribute(): string
+{
+    // لو مافي country_id أصلاً
+    if (!$this->country_id) {
+        return __('talent.location_unknown');
     }
 
-    public function skills()
-    {
-        return $this->belongsToMany(Skill::class, 'user_skills')
-            ->using(UserSkill::class)
-            ->withPivot('description')
-            ->withTimestamps();
-    }
+    // استخدم name_text الجديد مع fallback
+    $c = $this->getRelationValue('country') ?? \App\Models\Country::find($this->country_id);
+    return $c?->name_text ?: __('talent.location_unknown');
+}
+public function skills()
+{
+    return $this->belongsToMany(Skill::class, 'user_skills')
+        ->using(UserSkill::class)
+        ->withPivot(['level', 'description'])
+        ->withTimestamps();
+}
+
 
     public function languages()
     {
@@ -74,42 +100,55 @@ class User extends Authenticatable
             : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png';
     }
 
-    public function profileCompletionPercentage()
-    {
-        $totalFields = 0;
-        $filledFields = 0;
+ public function profileCompletionPercentage()
+{
+    $totalFields = 0;
+    $filledFields = 0;
 
-        $personalInfoFields = [
-            'first_name',
-            'last_name',
-            'phone',
-            'date_of_birth',
-            'gender',
-            'country_id',
-            'about_me',
-            'image_path',
-        ];
+    // حقول أساسية (أسهل)
+    $basicFields = [
+        'first_name',
+        'last_name',
+        'phone',
+        'country_id',
+    ];
 
-        foreach ($personalInfoFields as $field) {
-            $totalFields++;
-            if (!empty($this->$field)) {
-                $filledFields++;
-            }
-        }
-
+    foreach ($basicFields as $field) {
         $totalFields++;
-        if ($this->skills()->count() > 0) {
-            $hasQualifications = $this->skills()->wherePivot('description', '!=', null)->exists();
-            $filledFields += $hasQualifications ? 1 : 0.5;
-        }
-
-        $totalFields++;
-        if ($this->languages()->count() > 0) {
+        if (!empty($this->$field)) {
             $filledFields++;
         }
-
-        return $totalFields > 0 ? round(($filledFields / $totalFields) * 100) : 0;
     }
+
+    // حقول اختيارية (تزيد النسبة بس مش شرط)
+    $optionalFields = [
+        'date_of_birth',
+        'gender',
+        'about_me',
+        'image_path',
+    ];
+    foreach ($optionalFields as $field) {
+        $totalFields++;
+        if (!empty($this->$field)) {
+            $filledFields++;
+        }
+    }
+
+    // Skills (مجرد وجود Skill واحدة يكفي)
+    $totalFields++;
+    if ($this->skills()->count() > 0) {
+        $filledFields++;
+    }
+
+    // Languages (مجرد لغة وحدة تكفي)
+    $totalFields++;
+    if ($this->languages()->count() > 0) {
+        $filledFields++;
+    }
+
+    return $totalFields > 0 ? round(($filledFields / $totalFields) * 100) : 0;
+}
+
     /**
      * Invitations sent by this user.
      */

@@ -5,11 +5,10 @@
 
 <body>
     <!-- ======= Header ======= -->
-    @include(
-        'theme.Important-links.partials.header',
-        ['title' => 'سياسة الخصوصية لمهارات هب'],
-        ['description' => 'كل ما يجب ان تعرفه للاشتراك و التعاون معنا']
-    )
+@include('theme.important-links.partials.header', [
+    'title' => 'شروط الاستخدام لمهارات هب',
+    'description' => 'شروط استخدام مهارات هب'
+])
 
     <!-- ======= Privacy Content ======= -->
     <main class="privacy-content">
@@ -535,7 +534,7 @@
         <i class="bi bi-arrow-up-short"></i>
     </a>
 
-    @include('theme.important-links.partials.scripts')
+@include('theme.important-links.partials.scripts')
 </body>
 
 </html>

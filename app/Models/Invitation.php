@@ -14,19 +14,13 @@ class Invitation extends Model
         'reply',
         'source_user_id',
         'destination_user_id',
+        'message', 
     ];
 
     protected $casts = [
         'date_time' => 'datetime',
     ];
 
-    public function sourceUser()
-    {
-        return $this->belongsTo(User::class, 'source_user_id');
-    }
-
-    public function destinationUser()
-    {
-        return $this->belongsTo(User::class, 'destination_user_id');
-    }
+    public function sourceUser(){ return $this->belongsTo(User::class, 'source_user_id'); }
+    public function destinationUser(){ return $this->belongsTo(User::class, 'destination_user_id'); }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\ThemeController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProfileController as AdminProfileController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Admin\SkillCategoryController;
 
 use App\Http\Controllers\Admin\ConversationController as AdminConversationController;
 use App\Http\Controllers\Admin\UserController;
@@ -22,6 +23,7 @@ use App\Models\Conversation;
 use App\Events\ChatMessageSent;
 use App\Http\Controllers\ReviewController as UserReviewController;
 use App\Http\Controllers\PremiumRequestController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -60,6 +62,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
     Route::get('/conversations', [AdminConversationController::class, 'index'])->name('conversations.index');
     Route::delete('/conversations/{id}', [AdminConversationController::class, 'destroy'])->name('conversations.destroy');
+        Route::get('/skills-categories', [SkillCategoryController::class, 'index'])->name('skills-categories.index');
+
+        // Classifications
+        Route::post('/classifications', [SkillCategoryController::class, 'storeClassification'])->name('classifications.store');
+        Route::put('/classifications/{classification}', [SkillCategoryController::class, 'updateClassification'])->name('classifications.update');
+        Route::delete('/classifications/{classification}', [SkillCategoryController::class, 'destroyClassification'])->name('classifications.destroy');
+
+        // Skills
+        Route::post('/skills', [SkillCategoryController::class, 'storeSkill'])->name('skills.store');
+        Route::put('/skills/{skill}', [SkillCategoryController::class, 'updateSkill'])->name('skills.update');
+        Route::delete('/skills/{skill}', [SkillCategoryController::class, 'destroySkill'])->name('skills.destroy');
 });
 
 
@@ -68,7 +81,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 |=============================*/
 Route::controller(ThemeController::class)->name('theme.')->group(function () {
     Route::get('/', 'index')->name('index');
-    Route::get('/skills', 'index')->name('skills'); // نفس المنطق
+    Route::get('/skills', 'skills')->name('skills'); // نفس المنطق
     Route::get('/about', 'about')->name('about');
     Route::get('/contact', 'contact')->name('contact');
     Route::get('/privacyPolicy', 'privacyPolicy')->name('privacyPolicy');
@@ -110,6 +123,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/invitations/{invitation}/reply', [InvitationController::class, 'reply'])->name('invitations.reply');
     Route::get('/invitation/check-eligibility', [InvitationController::class, 'checkEligibility'])->name('invitations.check');
 
+    Route::get('/exchanges', [InvitationController::class, 'exchanges'])->name('exchanges.index');
+
+    
     // OneSignal
     Route::post('/onesignal/update', function (\Illuminate\Http\Request $request) {
         $user = \App\Models\User::findOrFail(auth()->id());
@@ -149,8 +165,16 @@ Route::middleware('auth')->group(function () {
             Route::post('{exchange}/cancel', [ExchangeController::class, 'cancel'])->name('cancel');
         });
 });
-
+Route::middleware('auth')->group(function () {
+    Route::get('/invitations/unread-count', [InvitationController::class, 'unreadCount'])
+        ->name('invitations.unreadCount');
+});
 // routes/web.php
+
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications/counts', [NotificationController::class, 'counts'])
+        ->name('notifications.counts');
+});
 
 Route::middleware('auth')->group(function () {
     Route::prefix('conversations/{conversation}/reviews')

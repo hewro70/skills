@@ -4,8 +4,8 @@
   $formId  = $formId  ?? 'exchangeForm';
 @endphp
 
-<div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog">
+<div class="modal fade" id="{{ $modalId }}" tabindex="-1" aria-hidden="true" style="margin-top: 15vh;">
+  <div class="modal-dialog mt-2" >
     <form id="{{ $formId }}" class="modal-content" action="{{ route('conversations.exchanges.store', $conversation) }}" method="POST">
       @csrf
       <div class="modal-header">
@@ -35,9 +35,7 @@
           <label class="form-label">{{ __('modals.exchange.message_for_receiver') }}</label>
           <textarea name="message_for_receiver" class="form-control" rows="3" placeholder="{{ __('modals.exchange.message_placeholder') }}"></textarea>
         </div>
-        <div class="alert alert-info small">
-          {!! __('modals.exchange.info_html') !!}
-        </div>
+      
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" type="submit" id="exchangeSendBtn">{{ __('modals.exchange.submit') }}</button>

@@ -1,5 +1,14 @@
 {{-- resources/views/theme/conversations/show.blade.php --}}
 @extends('theme.master')
+@php
+  $REVIEW_THRESHOLD = 12;
+  $validMsgCount = ($messages ?? collect())->filter(function($m){
+      return mb_strlen(trim($m->body ?? '')) >= 7;
+  })->count();
+
+  $reviewEligible = $validMsgCount >= $REVIEW_THRESHOLD;
+  $remainingToReview = max(0, $REVIEW_THRESHOLD - $validMsgCount);
+@endphp
 
 @section('content')
   <div class="conversations-page d-flex flex-column min-vh-100">
@@ -38,15 +47,34 @@
             <div class="card shadow-sm flex-grow-1 d-flex flex-column" style="min-height:0;">
 
               {{-- Header --}}
-              <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                  <img src="{{ $otherUser->image_url }}" class="rounded-circle me-3" width="50" height="50" alt="{{ $otherUser->fullName() }}">
-                  <h5 class="mb-0">{{ $otherUser->fullName() }}</h5>
-                </div>
-                <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exchangeModal">
-                  <i class="bi bi-arrow-left-right me-1"></i> {{ __('conversations.header.exchange_request_button') }}
-                </button>
-              </div>
+             {{-- Header --}}
+<div class="card-header bg-light d-flex justify-content-between align-items-center">
+  <div class="d-flex align-items-center">
+    <img src="{{ $otherUser->image_url }}" class="rounded-circle me-3" width="50" height="50" alt="{{ $otherUser->fullName() }}">
+    <h5 class="mb-0">{{ $otherUser->fullName() }}</h5>
+  </div>
+
+  <div class="d-flex gap-2">
+    {{--  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#premiumModal">
+      <i class="bi bi-star-fill me-1"></i> {{ __('premium.go_premium') }}
+    </button>  --}}
+     @if($reviewEligible)
+    <button class="btn btn-success btn-sm" id="openReviewBtn" data-bs-toggle="modal" data-bs-target="#reviewModal">
+      <i class="bi bi-hand-thumbs-up me-1"></i>{{ __('conversations.buttons.review') }}
+    </button>
+  @else
+    <button class="btn btn-outline-secondary btn-sm" id="openReviewBtn" disabled
+            data-bs-toggle="tooltip"
+            title="{{ trans_choice('conversations.review.remaining', $remainingToReview, ['n'=>$remainingToReview]) }}">
+      <i class="bi bi-hand-thumbs-up me-1"></i>{{ __('conversations.buttons.review') }}
+    </button>
+  @endif
+    {{--  <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exchangeModal">
+      <i class="bi bi-arrow-left-right me-1"></i> {{ __('conversations.header.exchange_request_button') }}
+    </button>  --}}
+  </div>
+</div>
+
 
               {{-- Tabs --}}
               <ul class="nav nav-tabs px-3 pt-3" role="tablist">
@@ -56,12 +84,12 @@
                   </button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button class="nav-link" id="tab-exchanges" data-bs-toggle="tab" data-bs-target="#pane-exchanges" type="button" role="tab">
+                  {{--  <button class="nav-link" id="tab-exchanges" data-bs-toggle="tab" data-bs-target="#pane-exchanges" type="button" role="tab">
                     {{ __('conversations.tabs.exchanges') }}
                     @if(($exchanges ?? collect())->isNotEmpty())
                       <span class="badge bg-secondary align-middle">{{ $exchanges->count() }}</span>
                     @endif
-                  </button>
+                  </button>  --}}
                 </li>
               </ul>
 
@@ -158,9 +186,9 @@
                     @endif
                   </div>
                   <div class="card-footer bg-light d-flex justify-content-end">
-                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exchangeModal">
+                    {{--  <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#exchangeModal">
                       <i class="bi bi-arrow-left-right me-1"></i> {{ __('conversations.header.exchange_request_button') }}
-                    </button>
+                    </button>  --}}
                   </div>
                 </div>
 
@@ -200,13 +228,13 @@
       ],
     ])
 
-    @include('theme.conversations.modals.exchange', [
+    {{--  @include('theme.conversations.modals.exchange', [
       'modalId' => 'exchangeModal',
       'formId'  => 'exchangeForm',
       'conversation' => $conversation,
       'mySkills' => auth()->user()->skills,
       'theirSkills' => $otherUser->skills,
-    ])
+    ])  --}}
   </div> {{-- /conversations-page --}}
 @endsection
 
@@ -419,7 +447,7 @@ $(function () {
   (function initEcho(){
     if (!window.Echo) return;
     window.Echo.private(`conversation.{{ $conversation->id }}`)
-      .listen('ChatMessageSent', (data) => {
+      .listen('.message.sent', (data) => {
         if (String(data.message.user_id) === String({{ auth()->id() }})) return;
         const html = window.createMessageElement(data.message, false);
         $wrapper.append(html);
@@ -436,4 +464,4 @@ $(function () {
 {{-- سكربتات المودالات القابلة لإعادة الاستخدام --}}
 @include('theme.conversations.modals._review_scripts',   ['modalId'=>'reviewModal','formId'=>'reviewForm'])
 @include('theme.conversations.modals._subscribe_scripts',['modalId'=>'subscribeModal','formId'=>'subscribeForm','action'=> route('premium.requests.store') ])
-@include('theme.conversations.modals._exchange_scripts', ['modalId'=>'exchangeModal','formId'=>'exchangeForm','tabExchangesBtn'=>'tab-exchanges'])
+{{--  @include('theme.conversations.modals._exchange_scripts', ['modalId'=>'exchangeModal','formId'=>'exchangeForm','tabExchangesBtn'=>'tab-exchanges'])  --}}

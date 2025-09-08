@@ -182,7 +182,15 @@
                         المستخدمون
                     </a>
                 </li>
-             
+             <li role="none">
+    <a href="{{ route('admin.skills-categories.index') }}"
+       title="المهارات والتصنيفات"
+       class="nav-link {{ request()->routeIs('admin.skills-categories.*') ? 'active' : '' }}"
+       role="menuitem">
+        المهارات والتصنيفات
+    </a>
+</li>
+
                 <li role="none">
                     <a href="{{ route('admin.profile') }}" title="الملف الشخصي" class="nav-link {{ request()->routeIs('admin.profile') ? 'active' : '' }}" role="menuitem">
                         الملف الشخصي

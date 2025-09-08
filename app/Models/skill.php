@@ -44,4 +44,14 @@ class Skill extends Model
         $locale = $locale ?? app()->getLocale();
         return $q->orderByRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"$locale\"'))) $dir");
     }
+public function taughtExchanges()
+{
+    return $this->hasMany(\App\Models\Exchange::class, 'sender_skill_id');
+}
+
+public function learnedExchanges()
+{
+    return $this->hasMany(\App\Models\Exchange::class, 'receiver_skill_id');
+}
+
 }

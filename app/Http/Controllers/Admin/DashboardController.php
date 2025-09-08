@@ -59,36 +59,54 @@ public function index(Request $request)
         $genderResult = User::where('gender', $selectedGender)->count();
     }
 
-    // ✅ المهارات الأكثر طلبًا
-    $topSkills = Skill::withCount('exchanges')
-                      ->orderBy('exchanges_count', 'desc')
-                      ->take(5)
-                      ->get();
+$topSkills = Skill::select('skills.*')
+    ->selectRaw('
+        (SELECT COUNT(*) FROM exchanges e1 WHERE e1.sender_skill_id = skills.id)
+        +
+        (SELECT COUNT(*) FROM exchanges e2 WHERE e2.receiver_skill_id = skills.id)
+        AS exchanges_count
+    ')
+    ->orderByDesc('exchanges_count')
+    ->limit(5)
+    ->get();
 
+// ✅ أعلى تصنيف حسب عدد التبادلات (نجمع من الجهتين)
 $topClassification = DB::table('skills')
-    ->join('exchanges', 'skills.id', '=', 'exchanges.skill_id')
-    ->select('skills.classification_id', DB::raw('COUNT(exchanges.id) as total_exchanges'))
+    ->leftJoin('exchanges as e1', 'skills.id', '=', 'e1.sender_skill_id')
+    ->leftJoin('exchanges as e2', 'skills.id', '=', 'e2.receiver_skill_id')
+    ->select(
+        'skills.classification_id',
+        DB::raw('COUNT(DISTINCT e1.id) + COUNT(DISTINCT e2.id) as total_exchanges')
+    )
     ->groupBy('skills.classification_id')
     ->orderByDesc('total_exchanges')
     ->first();
 
-// Step 2: Get the top 5 skills from that classification
-$topFiveSkills = collect(); // Default to empty collection
-
+$topFiveSkills = collect();
 if ($topClassification) {
-    $topFiveSkills = Skill::withCount('exchanges')
-        ->where('classification_id', $topClassification->classification_id)
+    $topFiveSkills = Skill::where('classification_id', $topClassification->classification_id)
+        ->select('skills.*')
+        ->selectRaw('
+            (SELECT COUNT(*) FROM exchanges e1 WHERE e1.sender_skill_id = skills.id)
+            +
+            (SELECT COUNT(*) FROM exchanges e2 WHERE e2.receiver_skill_id = skills.id)
+            AS exchanges_count
+        ')
         ->orderByDesc('exchanges_count')
-        ->take(5)
+        ->limit(5)
         ->get();
 }
-
-
-$classificationIds = Skill::withCount('classification')
-                      ->orderBy('classification_id', 'desc')
-                      ->take(5)
-                      ->get();
-
+$classificationIds = DB::table('skills')
+    ->leftJoin('exchanges as e1', 'skills.id', '=', 'e1.sender_skill_id')
+    ->leftJoin('exchanges as e2', 'skills.id', '=', 'e2.receiver_skill_id')
+    ->select(
+        'skills.classification_id',
+        DB::raw('COUNT(DISTINCT e1.id) + COUNT(DISTINCT e2.id) as total_exchanges')
+    )
+    ->groupBy('skills.classification_id')
+    ->orderByDesc('total_exchanges')
+    ->limit(5)
+    ->get();
     $sentInvitationsCount = \App\Models\Invitation::count(); // All invitations
 $acceptedInvitationsCount = \App\Models\Invitation::where('reply', 'قبول')->count();
 $startedExchangesCount = DB::table('exchanges')

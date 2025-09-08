@@ -1,220 +1,195 @@
-<!DOCTYPE html>
-<html  dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+@php
 
+  // ====== خيارات قابلة للتمرير من include ======
+  $title        = $title        ?? __('hero.title', [], app()->getLocale())        ?? __('app.title');
+  $description  = $description  ?? __('hero.description', [], app()->getLocale())  ?? '';
+  $badge        = $badge        ?? __('hero.badge', [], app()->getLocale())        ?? null;
+  $current      = $current      ?? null; 
+  $homeLabel    = $homeLabel    ?? __('nav.home', [], app()->getLocale())          ?? 'Home';
 
-    <style>
-    
+  // صورة خلفية اختيارية
+  $bgImage      = $bgImage      ?? null; // مثال: asset('img/hero.jpg')
 
-     
+  // أزرار اختيارية
+  $primaryBtn   = $primaryBtn   ?? null; // ['label' => 'ابدأ الآن', 'href' => route('register')]
+  $secondaryBtn = $secondaryBtn ?? null; // ['label' => 'تعلّم المزيد', 'href' => route('theme.about')]
 
-        /* Page Title Styles */
-        .page-title {
-            margin: 0;
-            padding: 0;
-            background: transparent;
-            position: relative;
-            overflow: hidden;
-        }
+  // ارتفاع مدموج صغير (sm) أو عادي (md) أو كبير (lg)
+  $height       = in_array(($height ?? 'md'), ['sm','md','lg']) ? $height : 'md';
 
-        .page-title .heading {
-            position: relative;
-            text-align: center;
-            color: #fff;
-            padding: clamp(70px, 10vw, 120px) 0 clamp(50px, 6vw, 80px);
-            border-radius: 0 0 24px 24px;
-            box-shadow: 0 12px 30px rgba(2, 6, 23, 0.12);
-            background: linear-gradient(135deg, #4a90e2 0%, #5fa8ff 30%, #81c4ff 100%);
-            overflow: hidden;
-        }
+  // Light/Dark overlay
+  $overlay      = in_array(($overlay ?? 'auto'), ['light','dark','auto']) ? $overlay : 'auto';
 
-        .page-title .heading::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.18) 60%, rgba(0, 0, 0, 0.08) 100%);
-        }
+  // RTL/LTR
+  $isRtl        = app()->isLocale('ar');
+  $dir          = $isRtl ? 'rtl' : 'ltr';
 
-        .page-title .heading .container {
-            position: relative;
-            z-index: 2;
-        }
+  // تدرّج افتراضي لو ما في خلفية
+  $gradient     = $gradient ?? 'linear-gradient(135deg, #7ec8e3 0%, #a0d8ef 40%, #c7eaf5 100%)';
 
-        .page-title h1 {
-            font-weight: 800;
-            font-size: clamp(2rem, 4vw, 3rem);
-            margin-bottom: 16px;
-            letter-spacing: 0.5px;
-            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-        }
+  // نصوص افتراضية إن ما مرّرت شي
+  if (!$title)       $title = $current ?? $homeLabel;
+  if (!$description) $description = __('hero.fallback', [], app()->getLocale()) ?? '';
+@endphp
 
-        .page-title p {
-            color: rgba(255, 255, 255, 0.95);
-            font-size: clamp(1.1rem, 1.5vw, 1.3rem);
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.7;
-            font-weight: 400;
-        }
+<div class="mh-hero {{ 'mh-hero--'.$height }} {{ $isRtl ? 'is-rtl' : 'is-ltr' }}" dir="{{ $dir }}" aria-label="page intro">
+  {{-- الخلفية: صورة أو تدرّج --}}
+  <div class="mh-hero__bg" style="
+      @if($bgImage)
+        background-image: url('{{ $bgImage }}');
+      @else
+        background-image: {{ $gradient }};
+      @endif
+  "></div>
 
-        /* Breadcrumbs */
-        .page-title .breadcrumbs {
-            background: #fff;
-            padding: 16px 0;
-            border-top: 1px solid #f1f5f9;
-            border-bottom: 1px solid #f1f5f9;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
-        }
+  {{-- طبقة تعتيم --}}
+  @php
+    $overlayClass = match($overlay) {
+      'light' => 'mh-hero__overlay--light',
+      'dark'  => 'mh-hero__overlay--dark',
+      default => ($bgImage ? 'mh-hero__overlay--dark' : 'mh-hero__overlay--none'),
+    };
+  @endphp
+  <div class="mh-hero__overlay {{ $overlayClass }}"></div>
 
-        .page-title .breadcrumbs ol {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            align-items: center;
-        }
+  {{-- شكل زخرفي خفيف --}}
+  <div class="mh-hero__shape"></div>
 
-        .page-title .breadcrumbs li {
-            font-size: 0.95rem;
-            font-weight: 500;
-            color: #64748b;
-            display: flex;
-            align-items: center;
-            transition: var(--transition);
-        }
+  <div class="container position-relative mh-hero__container">
+    {{-- شارة صغيرة (اختياري) --}}
+    @if($badge)
+      <span class="mh-hero__badge">{{ $badge }}</span>
+    @endif
 
-        .page-title .breadcrumbs li:not(:last-child)::after {
-            content: "›";
-            margin: 0 8px;
-            color: #cbd5e1;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
+    <h1 class="mh-hero__title">{{ $title }}</h1>
 
-        .page-title .breadcrumbs li a {
-            color: #334155;
-            font-weight: 600;
-            text-decoration: none;
-            transition: var(--transition);
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
+    @if($description)
+      <p class="mh-hero__desc">{{ $description }}</p>
+    @endif
 
-        .page-title .breadcrumbs li a:hover {
-            color: var(--primary-color);
-            background: rgba(67, 97, 238, 0.08);
-        }
+    {{-- أزرار (اختياري) --}}
+    @if($primaryBtn || $secondaryBtn)
+      <div class="mh-hero__actions">
+        @if($primaryBtn)
+          <a href="{{ $primaryBtn['href'] ?? '#' }}" class="mh-btn mh-btn--primary">{{ $primaryBtn['label'] ?? '' }}</a>
+        @endif
+        @if($secondaryBtn)
+          <a href="{{ $secondaryBtn['href'] ?? '#' }}" class="mh-btn mh-btn--ghost">{{ $secondaryBtn['label'] ?? '' }}</a>
+        @endif
+      </div>
+    @endif
+  </div>
 
-        .page-title .breadcrumbs li.current {
-            color: var(--primary-color);
-            font-weight: 700;
-            background: rgba(67, 97, 238, 0.12);
-            padding: 4px 12px;
-            border-radius: 8px;
-        }
-
-        /* Content Styles */
-        .content-section {
-            padding: 60px 0;
-        }
-
-        .content-card {
-            background: white;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            padding: 30px;
-            margin-bottom: 30px;
-            transition: var(--transition);
-        }
-
-        .content-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .content-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        /* Animation for page title */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .page-title .heading {
-            animation: fadeInUp 0.8s ease-out;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .page-title .heading {
-                border-radius: 0 0 16px 16px;
-            }
-            
-            .page-title .breadcrumbs ol {
-                justify-content: flex-start;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Page Title -->
-    <div class="page-title" data-aos="fade">
-        <div class="heading">
-            <div class="container">
-                <div class="row justify-content-center text-center">
-                    <div class="col-lg-8">
-                        <h1>المهارات المتاحة</h1>
-                        <p class="mb-0">اكتشف مجموعة واسعة من المهارات التي نقدمها لمساعدتك في تحقيق أهدافك وتطوير قدراتك</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <nav class="breadcrumbs">
-            <div class="container">
-                <ol>
-                    <li><a href="{{ route('theme.index') }}">الرئيسية</a></li>
-                    <li class="current">المهارات</li>
-                </ol>
-            </div>
-        </nav>
+  {{-- فتات الخبز --}}
+  <nav class="mh-breadcrumbs" aria-label="breadcrumbs">
+    <div class="container">
+      <ol>
+        <li><a href="{{ route('theme.index') }}">{{ $homeLabel }}</a></li>
+        @if($current)
+          <li class="current">{{ $current }}</li>
+        @else
+          <li class="current">{{ $title }}</li>
+        @endif
+      </ol>
     </div>
+  </nav>
+</div>
 
+{{-- ============== STYLES ============== --}}
+<style>
+  :root{
+    --mh-hero-pad-sm: clamp(32px, 7vw, 56px);
+    --mh-hero-pad-md: clamp(48px, 9vw, 80px);
+    --mh-hero-pad-lg: clamp(72px, 12vw, 120px);
+    --mh-hero-radius: 18px;
+    --mh-ink: #0f172a;
+    --mh-muted: #64748b;
+    --mh-white: #fff;
+    --mh-brand: #000; /* primary */
+  }
 
-    <!-- Bootstrap & jQuery -->
-    
-    <script>
-        // Simple animation for page elements
-        document.addEventListener('DOMContentLoaded', function() {
-            const contentCards = document.querySelectorAll('.content-card');
-            
-            contentCards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(20px)';
-                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                
-                setTimeout(() => {
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, 200 + (index * 100));
-            });
-        });
-    </script>
-</body>
-</html>
+  .mh-hero{ position:relative; margin:0; padding:0; background:transparent; overflow:hidden; }
+  .mh-hero__bg{
+    position:absolute; inset:0; background-size:cover; background-position:center; filter: none;
+    transition: transform .6s ease;
+  }
+  .mh-hero:hover .mh-hero__bg{ transform: scale(1.02); }
+
+  .mh-hero__overlay{
+    position:absolute; inset:0; pointer-events:none;
+    transition: opacity .4s ease;
+  }
+  .mh-hero__overlay--none{ background: transparent; }
+  .mh-hero__overlay--light{ background: linear-gradient(180deg, rgba(255,255,255,.35), rgba(255,255,255,.1)); }
+  .mh-hero__overlay--dark{  background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.35)); }
+
+  .mh-hero__shape{
+    position:absolute; inset-inline: -10%; top: -60px; height: 180px;
+    background: radial-gradient(closest-side, rgba(255,255,255,.25), rgba(255,255,255,0));
+    filter: blur(12px);
+  }
+
+  .mh-hero__container{
+    position:relative; z-index:2; text-align:center;
+    padding-block: var(--mh-hero-pad-md);
+    color: var(--mh-white);
+  }
+  .mh-hero--sm .mh-hero__container{ padding-block: var(--mh-hero-pad-sm); }
+  .mh-hero--lg .mh-hero__container{ padding-block: var(--mh-hero-pad-lg); }
+
+  .mh-hero__badge{
+    display:inline-block; background:#fff; color:#111; font-weight:700;
+    padding:.35rem .75rem; border-radius:999px; margin-bottom:12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,.08);
+  }
+
+  .mh-hero__title{
+    color: var(--mh-white);
+    font-weight:800; letter-spacing:.2px;
+    font-size: clamp(1.6rem, 3.6vw, 2.6rem);
+    margin: 0 0 8px 0;
+    text-shadow: 0 2px 6px rgba(0,0,0,.15);
+  }
+  .mh-hero__desc{
+    margin:0 auto; max-width: 760px; line-height:1.7;
+    font-size: clamp(.98rem, 1.4vw, 1.1rem);
+    color: rgba(255,255,255,.95);
+  }
+
+  .mh-hero__actions{ margin-top:16px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .mh-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:.6rem 1.1rem; border-radius:999px; font-weight:700; text-decoration:none;
+    transition: all .22s ease;
+  }
+  .mh-btn--primary{ background:#000; color:#fff; box-shadow:0 8px 20px rgba(0,0,0,.12); }
+  .mh-btn--primary:hover{ transform: translateY(-1px); background:#111; }
+  .mh-btn--ghost{ background: rgba(255,255,255,.12); color:#fff; border:1px solid rgba(255,255,255,.35); backdrop-filter: blur(6px); }
+  .mh-btn--ghost:hover{ background: rgba(255,255,255,.18); transform: translateY(-1px); }
+
+  /* ===== Breadcrumbs ===== */
+  .mh-breadcrumbs{
+    background:#fff; border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;
+    box-shadow: 0 2px 8px rgba(0,0,0,.02);
+  }
+  .mh-breadcrumbs .container{ padding-block: 12px; }
+  .mh-breadcrumbs ol{
+    margin:0; padding:0; list-style:none; display:flex; gap:6px; align-items:center; justify-content:center; flex-wrap:wrap;
+  }
+  .mh-breadcrumbs li{
+    font-size:.95rem; color:#64748b; font-weight:600; display:flex; align-items:center;
+  }
+  .mh-breadcrumbs li:not(:last-child)::after{
+    content:"›"; margin:0 6px; color:#cbd5e1; font-size:1rem; font-weight:700;
+  }
+  .mh-breadcrumbs li a{
+    color:#334155; text-decoration:none; padding:3px 6px; border-radius:6px;
+  }
+  .mh-breadcrumbs li a:hover{ background:#f3f4f6; }
+  .mh-breadcrumbs .current{
+    color:#2563eb; background:rgba(37,99,235,.08); padding:3px 10px; border-radius:8px; font-weight:800;
+  }
+
+  /* RTL tweaks */
+  .is-rtl .mh-breadcrumbs li:not(:last-child)::after{ transform: scaleX(-1); }
+</style>

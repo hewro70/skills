@@ -31,17 +31,30 @@
 </style>
 @endpush
 
+@php
+  // جهّز بيانات الاشتراك/العدّاد مرة واحدة
+  $viewer = auth()->user();
+  $isPremiumViewer = $viewer
+    ? (method_exists($viewer, 'hasActiveSubscription') ? $viewer->hasActiveSubscription() : ($viewer->is_premium ?? false))
+    : false;
+
+  // يفضل تمرير $sentInvitesThisMonth من الكنترولر
+  $sentInvitesThisMonth = $sentInvitesThisMonth ?? 0;
+  $freeLimit = 5;
+  $remaining = max(0, $freeLimit - (int)$sentInvitesThisMonth);
+@endphp
+
 @forelse ($users as $user)
   @php
-    $rating = $user->avg_rating ?? null;           // إن وجد
-    $ratingCount = $user->ratings_count ?? null;   // إن وجد
-    $responseRate = $user->response_rate ?? null;  // إن وجد
+    $rating       = $user->avg_rating ?? null;
+    $ratingCount  = $user->ratings_count ?? null;
+    $responseRate = $user->response_rate ?? null;
   @endphp
 
   <div class="talent-card">
     {{-- Header --}}
     <div class="talent-header">
-      <img src="{{ $user->getImageUrlAttribute() }}" alt="Talent" class="talent-avatar">
+      <img src="{{ $user->image_url }}" alt="Talent" class="talent-avatar">
       <div class="talent-info">
         <h4 class="talent-name">{{ $user->fullName() }}</h4>
 
@@ -62,12 +75,12 @@
         {{-- دولة --}}
         <span class="talent-location">
           <i class="bi bi-geo-alt"></i>
-          {{ $user->country->name ?? __('talent.location_unknown') }}
+          {{ $user->location_text }}
         </span>
       </div>
     </div>
 
-    {{-- إحصائيات (تظهر فقط إذا فيه داتا) --}}
+    {{-- إحصائيات --}}
     <div class="talent-stats">
       @if($rating)
         <span>
@@ -105,17 +118,28 @@
         <i class="bi bi-person-badge"></i> {{ __('talent.view_profile') }}
       </a>
 
-      @if (auth()->check() && auth()->id() !== $user->id)
-        <form action="{{ route('invitations.send') }}" method="POST" class="d-inline invitation-form"
-              data-user-id="{{ $user->id }}" data-user-name="{{ $user->fullName() }}"
-              id="invitation-form-{{ $user->id }}">
-          @csrf
-          <input type="hidden" name="destination_user_id" value="{{ $user->id }}">
-          <button type="button" class="btn btn-sm btn-outline-primary send-invitation-btn">
-            <i class="bi bi-send"></i> {{ __('talent.invite') }}
-          </button>
-        </form>
-      @endif
+      @auth
+        <button type="button"
+                class="btn btn-sm btn-outline-primary js-open-invite"
+                data-user-id="{{ $user->id }}"
+                data-user-name="{{ $user->fullName() }}"
+                data-is-premium-viewer="{{ $isPremiumViewer ? 1 : 0 }}"
+                data-remaining="{{ $remaining }}"
+                data-free-limit="{{ $freeLimit }}"
+                data-bs-toggle="modal"
+                data-bs-target="#globalInviteModal">
+          <i class="bi bi-send"></i> {{ __('talent.invite') }}
+        </button>
+      @endauth
+
+      @guest
+        <button type="button"
+                class="btn btn-sm btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#registerModal_users">
+          <i class="bi bi-person-plus"></i> {{ __('auth.register_btn') }}
+        </button>
+      @endguest
     </div>
   </div>
 @empty
@@ -123,3 +147,91 @@
     <h4 class="text-muted">{{ __('talent.no_results') }}</h4>
   </div>
 @endforelse
+
+
+<script>
+document.addEventListener('click', function(e){
+  const btn = e.target.closest('.js-open-invite');
+  if(!btn) return;
+
+  // اقرا بيانات الزر
+  const userId   = btn.dataset.userId;
+  const userName = btn.dataset.userName || '';
+  const isPrem   = btn.dataset.isPremiumViewer === '1';
+  const remaining = btn.dataset.remaining || '0';
+  const freeLimit = btn.dataset.freeLimit || '5';
+
+  // عبي المودال
+  const titleEl  = document.getElementById('globalInviteTitle');
+  const userIdEl = document.getElementById('inviteUserId');
+  const freeBox  = document.getElementById('inviteFreeBox');
+  const premBox  = document.getElementById('invitePremiumBox');
+  const msgEl    = document.getElementById('inviteMessage');
+  const remEl    = document.getElementById('inviteRemaining');
+  const limEl    = document.getElementById('inviteFreeLimit');
+  const alertEl  = document.getElementById('globalInviteAlert');
+
+  titleEl.textContent = 'إرسال دعوة إلى ' + userName;
+  userIdEl.value = userId;
+
+  // نظّف الحالة السابقة
+  alertEl.className = 'd-none';
+  alertEl.textContent = '';
+  if(msgEl){ msgEl.value = ''; }
+
+  // أظهر البوكس المناسب
+  if(isPrem){
+    premBox.classList.remove('d-none');
+    freeBox.classList.add('d-none');
+  }else{
+    freeBox.classList.remove('d-none');
+    premBox.classList.add('d-none');
+    remEl.textContent = remaining;
+    limEl.textContent = freeLimit;
+  }
+});
+
+document.addEventListener('submit', async function(e){
+  const form = e.target.closest('#globalInviteForm');
+  if(!form) return;
+
+  e.preventDefault();
+
+  const action   = form.dataset.action;
+  const btn      = form.querySelector('button[type="submit"]');
+  const spinner  = btn.querySelector('.spinner-border');
+  const sendTxt  = btn.querySelector('.send-text');
+  const alertBox = document.getElementById('globalInviteAlert');
+
+  const fd = new FormData(form);
+
+  btn.disabled = true; spinner.classList.remove('d-none'); sendTxt.textContent = 'جارٍ الإرسال…';
+
+  try{
+    const res  = await fetch(action, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+      body: fd
+    });
+    const data = await res.json();
+
+    alertBox.classList.remove('d-none','alert-success','alert-warning','alert-danger','mt-3');
+    alertBox.classList.add('alert','mt-3', res.ok ? 'alert-success' : (res.status===422 ? 'alert-warning' : 'alert-danger'));
+    alertBox.textContent = data.message || (res.ok ? 'تم إرسال الدعوة.' : 'تعذّر إرسال الدعوة.');
+
+    if(res.ok){
+      setTimeout(()=>{
+        const modalEl = document.getElementById('globalInviteModal');
+        const m = bootstrap.Modal.getInstance(modalEl);
+        m && m.hide();
+      }, 900);
+    }
+  }catch(_){
+    alertBox.classList.remove('d-none','alert-success','alert-warning');
+    alertBox.classList.add('alert','alert-danger','mt-3');
+    alertBox.textContent = 'حدث خطأ غير متوقع.';
+  }finally{
+    btn.disabled = false; spinner.classList.add('d-none'); sendTxt.textContent = 'إرسال';
+  }
+});
+</script>

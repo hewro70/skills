@@ -107,7 +107,7 @@
                 <select class="form-select" id="classificationFilter">
                   <option value="">{{ __('profile.teachable_skills.select_classification') }}</option>
                   @foreach ($classifications as $classification)
-                    <option value="{{ $classification->id }}">{{ $classification->name }}</option>
+                    <option value="{{ $classification->id }}">{{ $classification->name_text  }}</option>
                   @endforeach
                 </select>
               </div>
@@ -147,7 +147,7 @@
               </div>
               <div class="col-md-6">
                 <nav aria-label="Skills pagination" class="float-end">
-                  <ul class="pagination">
+<ul id="skillsPagination" class="pagination">
                     <li class="page-item disabled" id="skillsPrevPage">
                       <a class="page-link" href="#" tabindex="-1">{{ __('profile.pagination.prev') }}</a>
                     </li>
@@ -291,7 +291,7 @@
             @foreach ($user->skills as $skill)
               <li class="list-group-item border-0 px-0">
                 <div class="mb-3">
-                  <label class="form-label fw-bold">{{ $skill->name }}</label>
+                  <label class="form-label fw-bold">{{ $skill->name_text  }}</label>
                   <textarea class="form-control skill-description"
                             name="skills[{{ $skill->id }}][description]" rows="4"
                             placeholder="{{ __('profile.qualifications.placeholder') }}">{{ $skill->pivot->description ?? '' }}</textarea>

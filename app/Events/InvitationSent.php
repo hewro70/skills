@@ -3,37 +3,43 @@
 namespace App\Events;
 
 use App\Models\Invitation;
-use Illuminate\Broadcasting\Channel;
-use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class InvitationSent
+class InvitationSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $invitation;
+    public function __construct(public Invitation $invitation) {}
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(Invitation $invitation)
-    {
-        $this->invitation = $invitation;
-    }
-
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return array<int, \Illuminate\Broadcasting\Channel>
-     */
+    // ابث على قناة المستخدم المستلم
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('channel-name'),
+            new PrivateChannel('App.Models.User.' . $this->invitation->destination_user_id),
+        ];
+    }
+
+    // اسم الحدث على الفرونت
+    public function broadcastAs(): string
+    {
+        return 'invitation.sent';
+    }
+
+    // البيانات اللي توصل للفرونت
+    public function broadcastWith(): array
+    {
+        return [
+            'id'    => $this->invitation->id,
+            'from'  => $this->invitation->sourceUser?->fullName() ?? '',
+            'at'    => optional($this->invitation->date_time)->format('Y-m-d H:i'),
+            'url'   => route('invitations.index'),
+            'title' => __('invitations.title_received'),
+            'body'  => __('invitations.sent_at', ['date' => optional($this->invitation->date_time)->format('Y-m-d H:i')]),
+            'icon'  => 'fa-envelope-open-text',
         ];
     }
 }

@@ -84,33 +84,27 @@ class ConversationController extends Controller
 
     $beforeId = request('before');
 
-    // الرسائل: نرتّب بالـ id تنازلي (أسرع للفهرسة)، ثم نعكس للعرض تصاعدي
     $messages = $conversation->messages()
         ->with('user')
         ->when($beforeId, fn($q) => $q->where('id', '<', $beforeId))
         ->orderByDesc('id')
-        ->limit(100)              // آخر 100 رسالة في الدفعة
+        ->limit(100)
         ->get()
         ->reverse()
         ->values();
 
-    // ✅ مهم: استخدم users.id وليس user_id
     $otherUser = $conversation->users()
         ->where('users.id', '!=', Auth::id())
         ->first();
 
-    // طلبات التبادل لإظهارها أعلى المحادثة
+    // ===== علّق جلب الإكستشينج =====
+    /*
     $exchanges = $conversation->exchanges()
-        ->with([
-            'sender',
-            'receiver',
-            'senderSkill:id,name',
-            'receiverSkill:id,name',
-        ])
+        ->with(['sender','receiver','senderSkill:id,name','receiverSkill:id,name'])
         ->orderByDesc('created_at')
         ->get();
+    */
 
-    // استجابة AJAX (للسحب لأعلى/لود المزيد)
     if (request()->boolean('_ajax')) {
         $html = '';
         foreach ($messages as $m) {
@@ -126,11 +120,10 @@ class ConversationController extends Controller
             </div>';
         }
 
-        // حساب hasMore و next_before بأمان لو كانت الدفعة فاضية
         $hasMore = false;
         $nextBefore = null;
         if ($messages->isNotEmpty()) {
-            $earliestId = $messages->first()->id;   // لأننا عملنا reverse()
+            $earliestId = $messages->first()->id;
             $hasMore    = $conversation->messages()->where('id', '<', $earliestId)->exists();
             $nextBefore = $earliestId;
         }
@@ -142,8 +135,10 @@ class ConversationController extends Controller
         ]);
     }
 
-    return view('theme.conversations.show', compact('conversation', 'messages', 'otherUser', 'exchanges'));
+    // ===== مرّر بدون exchanges =====
+    return view('theme.conversations.show', compact('conversation', 'messages', 'otherUser'));
 }
+
 
     public function create()
     {
@@ -328,5 +323,5 @@ class ConversationController extends Controller
         ]);
 
         return back()->with('success', 'تم إرسال التقييم بنجاح');
-    }
-}
+    } 
+    } 

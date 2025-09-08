@@ -24,15 +24,29 @@ class Conversation extends Model
         return $this->hasMany(Message::class);
     }
 
-    public function otherUser()
+    // ✅ صحّح الفلترة: استخدم users.id
+    public function otherUser(?int $viewerId = null)
     {
-        return $this->users()->where('user_id', '!=', auth()->id());
+        $viewerId = $viewerId ?? auth()->id();
+        return $this->users()->where('users.id', '!=', $viewerId);
     }
+
     public function exchanges()
     {
-    return $this->hasMany(\App\Models\Exchange::class);
+        return $this->hasMany(\App\Models\Exchange::class);
     }
 
+    /** عدد الرسائل المحتسَبة للتقييم (≥ 7 أحرف) */
+    public function eligibleMessagesCount(): int
+    {
+        return (int) $this->messages()
+            ->whereRaw('CHAR_LENGTH(body) >= 7') // PostgreSQL: LENGTH(body)
+            ->count();
+    }
 
-    
+    /** هل تحقّق شرط فتح التقييم (12 رسالة مجتمعة بطول ≥ 7)؟ */
+    public function canTriggerReview(): bool
+    {
+        return $this->eligibleMessagesCount() >= 12;
+    }
 }

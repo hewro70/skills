@@ -1,19 +1,5 @@
-
-    <!-- Bootstrap Bundle with Popper -->
-    <!-- jQuery -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-    <!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    <script>
-/* ===== i18n bridge (reads from lang/*.json) ===== */
+<script>
+/* ===== i18n bridge ===== */
 (function () {
   const T = {
     swal: {
@@ -45,511 +31,498 @@
       pagination_next: @json(__('profile.pagination.next')),
       languages_select_level: @json(__('profile.languages.select_level')),
     },
-    common: {
-      not_set: @json(__('common.not_set'))
+    common: { not_set: @json(__('common.not_set')) },
+    // === مفاتيح بسيطة للمستويات (غيّرها للعربي لو بدك) ===
+    skills: {
+      level_label: 'Level',
+      desc_label: 'Description',
+      levels: { 1:'Beginner', 2:'Junior', 3:'Intermediate', 4:'Senior', 5:'Expert' }
     }
   };
-  window.T = T; // متاح للاستخدام بباقي السكربت
+  window.T = T;
 })();
 </script>
 
 <script>
-/* ===== Upload profile image (i18n) ===== */
+/* ===== Upload / Remove profile image ===== */
 async function uploadProfileImage(file) {
   if (!file) return;
-
-  const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const validTypes = ['image/jpeg','image/png','image/gif','image/webp'];
   if (!validTypes.includes(file.type)) {
-    Swal.fire({
-      title: T.swal.error_title,
-      text: T.swal.image_error_type,
-      icon: 'error',
-      confirmButtonColor: '#4e73df'
-    });
-    return false;
+    Swal.fire({ title:T.swal.error_title, text:T.swal.image_error_type, icon:'error' }); return;
   }
-
-  const maxSize = 5 * 1024 * 1024; // 5MB
+  const maxSize = 5 * 1024 * 1024;
   if (file.size > maxSize) {
-    Swal.fire({
-      title: T.swal.error_title,
-      text: T.swal.image_error_size,
-      icon: 'error',
-      confirmButtonColor: '#4e73df'
-    });
-    return false;
+    Swal.fire({ title:T.swal.error_title, text:T.swal.image_error_size, icon:'error' }); return;
   }
-
   const formData = new FormData();
   formData.append('profile_image', file);
   formData.append('_token', '{{ csrf_token() }}');
 
-  Swal.fire({
-    title: T.swal.uploading_image,
-    html: T.swal.please_wait,
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading()
-  });
-
-  try {
-    const response = await axios.post('/profile/upload-image', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-
-    Swal.fire({
-      title: T.swal.success_title,
-      text: T.swal.profile_image_updated,
-      icon: 'success',
-      confirmButtonColor: '#4e73df'
-    });
-
-    if (response.data.image_url) {
-      const newImageUrl = response.data.image_url + '?' + new Date().getTime();
-      $('#profileImage, #sidebarProfileImage').attr('src', newImageUrl);
-      setTimeout(() => location.reload(), 1000);
+  Swal.fire({ title:T.swal.uploading_image, html:T.swal.please_wait, allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+  try{
+    const res = await axios.post('{{ url("/profile/upload-image") }}', formData, { headers:{'Content-Type':'multipart/form-data'} });
+    Swal.fire({ title:T.swal.success_title, text:T.swal.profile_image_updated, icon:'success' });
+    if(res.data.image_url){
+      const url = res.data.image_url + '?' + Date.now();
+      $('#profileImage, #sidebarProfileImage').attr('src', url);
     }
-
-    location.reload();
-    return true;
-
-  } catch (error) {
-    let errorMessage = T.swal.delete_error;
-    if (error.response?.data?.message) errorMessage = error.response.data.message;
-
-    Swal.fire({
-      title: T.swal.error_title,
-      text: errorMessage,
-      icon: 'error',
-      confirmButtonColor: '#4e73df'
-    });
-    return false;
+  }catch(e){
+    Swal.fire({ title:T.swal.error_title, text: (e.response?.data?.message || T.swal.delete_error), icon:'error' });
   }
 }
 
-$(document).ready(function () {
-  /* ===== Select2 (i18n) ===== */
-  $('#classificationFilter').select2({
-    placeholder: T.select2.classification,
-    allowClear: true,
-    language: { noResults: () => T.select2.no_results }
-  });
+document.addEventListener('DOMContentLoaded', () => {
+  // Select2
+  $('#classificationFilter').select2({ placeholder: T.select2.classification, allowClear:true, language:{ noResults:()=>T.select2.no_results } });
+  $('#country_id').select2({ placeholder: T.select2.country, dir: "{{ app()->isLocale('ar') ? 'rtl' : 'ltr' }}", width:'100%' });
 
-  $('#country_id').select2({
-    placeholder: T.select2.country,
-    dir: "{{ app()->isLocale('ar') ? 'rtl' : 'ltr' }}",
-    width: '100%'
-  });
+  // Image upload
+  $('#uploadImageBtn').on('click', e => { e.preventDefault(); $('#profileImageInput').trigger('click'); });
+  $('#profileImageInput').on('change', function(){ if(this.files?.[0]) uploadProfileImage(this.files[0]); });
 
-  /* ===== Profile Image Upload ===== */
-  $('#uploadImageBtn').on('click', function (e) {
-    e.preventDefault();
-    $('#profileImageInput').trigger('click');
-  });
-
-  $('#profileImageInput').on('change', function () {
-    if (this.files && this.files[0]) uploadProfileImage(this.files[0]);
-  });
-
-  /* ===== Sidebar ===== */
-  const sidebar = $('#sidebar');
-  const sidebarToggle = $('#sidebarToggle');
-  const mobileSidebarToggle = $('#mobileSidebarToggle');
-  const mobileSidebarToggle2 = $('#mobileSidebarToggle2');
-
-  function toggleSidebar() {
-    sidebar.toggleClass('show');
-    $('body').toggleClass('sidebar-open');
+  // Remove image
+  const removeBtn = document.getElementById('removeImageBtn');
+  if(removeBtn){
+    removeBtn.addEventListener('click', function(){
+      Swal.fire({ title:T.swal.delete_confirm_question, icon:'warning', showCancelButton:true, confirmButtonText:T.swal.delete_confirm, cancelButtonText:T.swal.cancel })
+        .then((r)=>{
+          if(!r.isConfirmed) return;
+          fetch('{{ route('profile.remove-image') }}',{
+            method:'POST',
+            headers:{ 'X-CSRF-TOKEN':'{{ csrf_token() }}', 'Content-Type':'application/json' },
+            body: JSON.stringify({})
+          })
+          .then(x=>x.json())
+          .then(data=>{
+            if(data.success){
+              const gender = '{{ $user->gender }}';
+              const def = gender==='female' ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png' : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png';
+              document.getElementById('profileImage').src = def;
+              document.getElementById('sidebarProfileImage').src = def + '?v=' + Date.now();
+              Swal.fire(T.swal.success_title, T.swal.delete_success, 'success');
+            }else{
+              Swal.fire(T.swal.error_title, T.swal.delete_error, 'error');
+            }
+          }).catch(()=>Swal.fire(T.swal.error_title, T.swal.network_error, 'error'));
+        });
+    });
   }
-  function initSidebar() {
-    if ($(window).width() < 992) sidebar.removeClass('show');
-    else sidebar.addClass('show');
-  }
-  initSidebar();
 
-  [sidebarToggle, mobileSidebarToggle, mobileSidebarToggle2].forEach(btn => {
-    btn.on('click', function (e) { e.preventDefault(); e.stopPropagation(); toggleSidebar(); });
-  });
-
-  $(document).on('click', function (e) {
-    if ($(window).width() < 992 &&
-        !$(e.target).closest('#sidebar, #sidebarToggle, #mobileSidebarToggle, #mobileSidebarToggle2').length &&
-        sidebar.hasClass('show')) {
-      toggleSidebar();
-    }
-  });
-  $(window).on('resize', initSidebar);
-
-  /* ===== Skills ===== */
+  /* ====== Skills logic (Level + Description) ====== */
+  const locale = document.documentElement.lang || 'ar';
   const skillsPerPage = 10;
   let currentSkillsPage = 1;
-  let filteredSkills = @json($skills);
-  let allSelectedSkills = @json($user->skills->pluck('id')->toArray()) || [];
 
-  $('#skillFilterType').change(function () {
-    const filterType = $(this).val();
-    $('#skillNameFilterContainer').toggle(filterType === 'skill');
-    $('#classificationFilterContainer').toggle(filterType === 'classification');
-
-    if (filterType === 'none') {
-      filteredSkills = @json($skills);
-      currentSkillsPage = 1;
-      renderSkillsTable();
+  function toText(val){
+    if (typeof val === 'string') return val;
+    if (val && typeof val === 'object') {
+      if (typeof val.name_text === 'string') return val.name_text;
+      if (val[locale]) return val[locale];
+      const first = Object.values(val)[0];
+      if (typeof first === 'string') return first;
     }
-  });
-
-  $('#skillNameFilter').keyup(function () {
-    const searchTerm = $(this).val().toLowerCase();
-    filteredSkills = @json($skills).filter(skill => (skill.name || '').toLowerCase().includes(searchTerm));
-    currentSkillsPage = 1;
-    renderSkillsTable();
-  });
-
-  $('#classificationFilter').change(function () {
-    const classificationId = $(this).val();
-    filteredSkills = classificationId
-      ? @json($skills).filter(skill => skill.classification_id == classificationId)
-      : @json($skills);
-    currentSkillsPage = 1;
-    renderSkillsTable();
-  });
-
-  $(document).on('change', '.form-check-input[type="checkbox"][name^="skills"]', function () {
-    const skillId = parseInt($(this).val());
-    if ($(this).is(':checked')) {
-      if (!allSelectedSkills.includes(skillId)) allSelectedSkills.push(skillId);
-    } else {
-      allSelectedSkills = allSelectedSkills.filter(id => id !== skillId);
-    }
-  });
-
-  $(document).on('click', '.skills-page-link', function (e) {
-    e.preventDefault();
-    currentSkillsPage = parseInt($(this).data('page'));
-    renderSkillsTable();
-  });
-  $(document).on('click', '#skillsPrevPage', function (e) {
-    e.preventDefault();
-    if (currentSkillsPage > 1) { currentSkillsPage--; renderSkillsTable(); }
-  });
-  $(document).on('click', '#skillsNextPage', function (e) {
-    e.preventDefault();
-    if (currentSkillsPage < Math.ceil(filteredSkills.length / skillsPerPage)) {
-      currentSkillsPage++; renderSkillsTable();
-    }
-  });
-
-  function renderSkillsTable() {
-    const startIndex = (currentSkillsPage - 1) * skillsPerPage;
-    const paginatedSkills = filteredSkills.slice(startIndex, startIndex + skillsPerPage);
-
-    let html = '';
-    paginatedSkills.forEach(skill => {
-      const clsName = (skill.classification && skill.classification.name) ? skill.classification.name : T.common.not_set;
-      html += `
-        <tr>
-          <td>${skill.name || ''}</td>
-          <td>${clsName}</td>
-          <td class="text-center">
-            <input class="form-check-input" type="checkbox"
-              name="skills[${skill.id}]"
-              id="skill_${skill.id}"
-              value="${skill.id}"
-              ${allSelectedSkills.includes(skill.id) ? 'checked' : ''}>
-          </td>
-        </tr>`;
-    });
-
-    $('#skillsTableBody').html(html);
-    updateSkillsPaginationInfo();
+    return '';
   }
 
-  function updateSkillsPaginationInfo() {
-    const startIndex = (currentSkillsPage - 1) * skillsPerPage;
-    $('#skillsFrom').text(startIndex + 1);
-    $('#skillsTo').text(Math.min(startIndex + skillsPerPage, filteredSkills.length));
-    $('#skillsTotal').text(filteredSkills.length);
+  const $skillsTableBody = $('#skillsTableBody');
+  const $skillsPagination = $('#skillsPagination');
+  const rawSkills = @json($skills ?? []);
+  const normalizedSkills = (rawSkills || []).map(s => {
+    const nameText = (typeof s.name_text === 'string' && s.name_text) || toText(s.name) || '';
+    const cls = s.classification || null;
+    const clsText = (cls && (typeof cls.name_text === 'string')) ? cls.name_text : (cls ? toText(cls.name) : '') || (T.common?.not_set || '');
+    return { ...s, name_text: nameText, classification_name_text: clsText };
+  });
 
-    const totalPages = Math.ceil(filteredSkills.length / skillsPerPage);
-    let paginationHtml = `
-      <li class="page-item ${currentSkillsPage === 1 ? 'disabled' : ''}" id="skillsPrevPage">
-        <a class="page-link" href="#" tabindex="-1">${T.profile.pagination_prev}</a>
-      </li>`;
+  let filteredSkills = normalizedSkills.slice();
 
-    for (let i = 1; i <= totalPages; i++) {
-      paginationHtml += `
-        <li class="page-item ${i === currentSkillsPage ? 'active' : ''}">
-          <a class="page-link skills-page-link" href="#" data-page="${i}">${i}</a>
-        </li>`;
-    }
-
-    paginationHtml += `
-      <li class="page-item ${currentSkillsPage === totalPages ? 'disabled' : ''}" id="skillsNextPage">
-        <a class="page-link" href="#">${T.profile.pagination_next}</a>
-      </li>`;
-
-    $('.pagination').first().html(paginationHtml);
-  }
-
-  /* ===== Languages ===== */
-  const languagesPerPage = 10;
-  let currentLanguagesPage = 1;
-  let filteredLanguages = @json($languages);
-  let allLanguagesData = @json($languages);
-  let selectedLanguages = @json(
-    $user->languages->mapWithKeys(function ($lang) {
-      return [$lang->id => ['selected' => true, 'level' => $lang->pivot->level]];
-    })->toArray()
+  // ✅ نبني المختار مسبقاً من pivot: { id: {level, description} }
+  let selectedSkills = @json(
+    $user->skills->mapWithKeys(function($s){
+      return [
+        $s->id => [
+          'level' => (int)($s->pivot->level ?? 3),
+          'description' => $s->pivot->description
+        ]
+      ];
+    })
   ) || {};
 
-  @foreach ($user->languages as $lang)
-    selectedLanguages[{{ $lang->id }}] = { selected: true, level: '{{ $lang->pivot->level }}' };
-  @endforeach
-
-  renderSkillsTable();
-  renderLanguagesTable();
-
-  $('#languageFilter').keyup(function () {
-    const searchTerm = $(this).val().toLowerCase();
-    filteredLanguages = allLanguagesData.filter(language => (language.name || '').toLowerCase().includes(searchTerm));
-    currentLanguagesPage = 1;
-    renderLanguagesTable();
+  $('#skillFilterType').on('change', function(){
+    const v = $(this).val();
+    $('#skillNameFilterContainer').toggleClass('d-none', v!=='skill');
+    $('#classificationFilterContainer').toggleClass('d-none', v!=='classification');
+    if(v==='none'){ filteredSkills = normalizedSkills.slice(); currentSkillsPage=1; renderSkills(); }
+  });
+  $('#skillNameFilter').on('keyup', function(){
+    const q = ($(this).val() || '').toLowerCase();
+    filteredSkills = normalizedSkills.filter(s => (s.name_text || '').toLowerCase().includes(q));
+    currentSkillsPage=1; renderSkills();
+  });
+  $('#classificationFilter').on('change', function(){
+    const id = $(this).val();
+    filteredSkills = id ? normalizedSkills.filter(s => String(s.classification_id) === String(id)) : normalizedSkills.slice();
+    currentSkillsPage=1; renderSkills();
   });
 
-  $(document).on('click', '.languages-page-link', function (e) {
-    e.preventDefault();
-    currentLanguagesPage = parseInt($(this).data('page'));
-    renderLanguagesTable();
-  });
-  $(document).on('click', '#languagesPrevPage', function (e) {
-    e.preventDefault();
-    if (currentLanguagesPage > 1) { currentLanguagesPage--; renderLanguagesTable(); }
-  });
-  $(document).on('click', '#languagesNextPage', function (e) {
-    e.preventDefault();
-    if (currentLanguagesPage < Math.ceil(filteredLanguages.length / languagesPerPage)) {
-      currentLanguagesPage++; renderLanguagesTable();
-    }
-  });
+  function escapeHtml(str){ return String(str).replace(/[&<>"'`=\/]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'}[s])); }
 
-  $(document).on('change', '.language-checkbox', function () {
-    const row = $(this).closest('tr');
-    const levelSelect = row.find('.language-level');
-    const languageId = parseInt($(this).val());
+  function renderSkills(){
+    const start = (currentSkillsPage-1)*skillsPerPage;
+    const page  = filteredSkills.slice(start, start+skillsPerPage);
 
-    if ($(this).is(':checked')) {
-      // NOTE: القيم (value) تبقى عربية كما هي لحفظها في الداتابيس
-      if (!levelSelect.val()) levelSelect.val('مبتدئ');
-      levelSelect.prop('disabled', false);
-      selectedLanguages[languageId] = { selected: true, level: levelSelect.val() };
-    } else {
-      levelSelect.prop('disabled', true);
-      delete selectedLanguages[languageId];
-    }
-  });
+    let rows = '';
+    page.forEach(skill=>{
+      const sel   = selectedSkills[String(skill.id)] || null;
+      const isOn  = !!sel;
+      const lvl   = sel?.level ?? 3;
+      const desc  = sel?.description ?? '';
 
-  $(document).on('change', '.language-level', function () {
-    const languageId = parseInt($(this).closest('tr').find('.language-checkbox').val());
-    if (selectedLanguages[languageId]) {
-      selectedLanguages[languageId].level = $(this).val();
-    }
-  });
+      const levelOptions = [1,2,3,4,5].map(n => {
+        const label = (window.T?.skills?.levels?.[n]) || n;
+        return `<option value="${n}" ${n===lvl?'selected':''}>${label}</option>`;
+      }).join('');
 
-  function renderLanguagesTable() {
-    const startIndex = (currentLanguagesPage - 1) * languagesPerPage;
-    const paginatedLanguages = filteredLanguages.slice(startIndex, startIndex + languagesPerPage);
-
-    let html = '';
-    paginatedLanguages.forEach(language => {
-      const isSelected = Object.prototype.hasOwnProperty.call(selectedLanguages, language.id);
-      const level = isSelected ? selectedLanguages[language.id].level : '';
-
-      html += `
-        <tr>
-          <td>${language.name || ''}</td>
-          <td>
-            <select class="form-select language-level" name="languages[${language.id}][level]" ${isSelected ? '' : 'disabled'}>
-              <option value="">${T.profile.languages_select_level}</option>
-              <option value="مبتدئ جدًا" ${level === 'مبتدئ جدًا' ? 'selected' : ''}>@json(__('profile.languages.level.a1'))</option>
-              <option value="مبتدئ" ${level === 'مبتدئ' ? 'selected' : ''}>@json(__('profile.languages.level.a2'))</option>
-              <option value="ما قبل المتوسط" ${level === 'ما قبل المتوسط' ? 'selected' : ''}>@json(__('profile.languages.level.b1'))</option>
-              <option value="متوسط" ${level === 'متوسط' ? 'selected' : ''}>@json(__('profile.languages.level.b2'))</option>
-              <option value="فوق المتوسط" ${level === 'فوق المتوسط' ? 'selected' : ''}>@json(__('profile.languages.level.c1'))</option>
-              <option value="متقدم جدًا" ${level === 'متقدم جدًا' ? 'selected' : ''}>@json(__('profile.languages.level.c2'))</option>
+      rows += `
+        <tr data-skill-id="${skill.id}">
+          <td>${escapeHtml(skill.name_text||'')}</td>
+          <td>${escapeHtml(skill.classification_name_text||'')}</td>
+          <td class="text-center">
+            <select class="form-select form-select-sm skill-level" ${isOn?'':'disabled'}>
+              ${levelOptions}
             </select>
           </td>
+          <td>
+            <input type="text" class="form-control form-control-sm skill-desc"
+                   placeholder="${(window.T?.skills?.desc_label)||'Description'}"
+                   value="${escapeHtml(desc)}" ${isOn?'':'disabled'}>
+          </td>
           <td class="text-center">
-            <input class="form-check-input language-checkbox" type="checkbox"
-              name="languages[${language.id}][selected]"
-              id="language_${language.id}" value="${language.id}"
-              ${isSelected ? 'checked' : ''}>
+            <div class="form-check d-inline-block">
+              <input class="form-check-input skill-checkbox" type="checkbox" value="${skill.id}" ${isOn?'checked':''}>
+            </div>
           </td>
         </tr>`;
     });
-
-    $('#languagesTableBody').html(html);
-    updateLanguagesPaginationInfo();
+    $skillsTableBody.html(rows);
+    renderSkillsPagination();
   }
 
-  function updateLanguagesPaginationInfo() {
-    const startIndex = (currentLanguagesPage - 1) * languagesPerPage;
-    $('#languagesFrom').text(startIndex + 1);
-    $('#languagesTo').text(Math.min(startIndex + languagesPerPage, filteredLanguages.length));
-    $('#languagesTotal').text(filteredLanguages.length);
-
-    const totalPages = Math.ceil(filteredLanguages.length / languagesPerPage);
-    let paginationHtml = `
-      <li class="page-item ${currentLanguagesPage === 1 ? 'disabled' : ''}" id="languagesPrevPage">
-        <a class="page-link" href="#" tabindex="-1">${T.profile.pagination_prev}</a>
+  function renderSkillsPagination(){
+    const total = Math.max(1, Math.ceil(filteredSkills.length/skillsPerPage));
+    let html = `
+      <li class="page-item ${currentSkillsPage===1?'disabled':''}">
+        <a class="page-link" href="#" data-page="prev">${T.profile.pagination_prev}</a>
       </li>`;
-
-    for (let i = 1; i <= totalPages; i++) {
-      paginationHtml += `
-        <li class="page-item ${i === currentLanguagesPage ? 'active' : ''}">
-          <a class="page-link languages-page-link" href="#" data-page="${i}">${i}</a>
-        </li>`;
+    for(let i=1;i<=total;i++){
+      html += `<li class="page-item ${i===currentSkillsPage?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
     }
-
-    paginationHtml += `
-      <li class="page-item ${currentLanguagesPage === totalPages ? 'disabled' : ''}" id="languagesNextPage">
-        <a class="page-link" href="#">${T.profile.pagination_next}</a>
+    html += `
+      <li class="page-item ${currentSkillsPage===total?'disabled':''}">
+        <a class="page-link" href="#" data-page="next">${T.profile.pagination_next}</a>
       </li>`;
-
-    $('.pagination').last().html(paginationHtml);
+    $skillsPagination.html(html);
   }
 
-  /* ===== Form submit (i18n) ===== */
-  $('#profileForm').on('submit', function (e) {
+  $skillsPagination.on('click', 'a.page-link', function(e){
+    e.preventDefault();
+    const p = $(this).data('page');
+    const total = Math.max(1, Math.ceil(filteredSkills.length/skillsPerPage));
+    if(p==='prev' && currentSkillsPage>1) currentSkillsPage--;
+    else if(p==='next' && currentSkillsPage<total) currentSkillsPage++;
+    else if(!isNaN(parseInt(p))) currentSkillsPage = parseInt(p);
+    renderSkills();
+  });
+
+  // أحداث تفاعلية للـcheckbox / level / description
+  $skillsTableBody.on('change', '.skill-checkbox', function(){
+    const id = String($(this).val());
+    const $row = $(this).closest('tr');
+    const $lvl = $row.find('.skill-level');
+    const $dsc = $row.find('.skill-desc');
+
+    if (this.checked) {
+      const level = parseInt($lvl.val() || '3', 10);
+      selectedSkills[id] = { level: Math.max(1, Math.min(5, level)), description: $dsc.val() || '' };
+      $lvl.prop('disabled', false);
+      $dsc.prop('disabled', false);
+    } else {
+      delete selectedSkills[id];
+      $lvl.prop('disabled', true);
+      $dsc.prop('disabled', true);
+    }
+  });
+
+  $skillsTableBody.on('change', '.skill-level', function(){
+    const $row = $(this).closest('tr');
+    const id   = String($row.data('skill-id'));
+    if (!selectedSkills[id]) return;
+    const lvl = parseInt($(this).val() || '3', 10);
+    selectedSkills[id].level = Math.max(1, Math.min(5, lvl));
+  });
+
+  $skillsTableBody.on('input', '.skill-desc', function(){
+    const $row = $(this).closest('tr');
+    const id   = String($row.data('skill-id'));
+    if (!selectedSkills[id]) return;
+    selectedSkills[id].description = $(this).val() || '';
+  });
+
+  renderSkills();
+
+  /* ===== Languages logic (كما هي) ===== */
+  const languagesPerPage = 10;
+  let currentLanguagesPage = 1;
+  let allLanguagesData = @json($languages ?? []);
+  let filteredLanguages = allLanguagesData.slice();
+
+  // selectedLanguages: { [id]: { selected: true, level: 'متوسط' } }
+  let selectedLanguages = @json(
+    $user->languages->mapWithKeys(fn($l)=>[$l->id => ['selected'=>true, 'level'=>$l->pivot->level]])->toArray()
+  ) || {};
+
+  function renderLanguages(){
+    const start = (currentLanguagesPage-1)*languagesPerPage;
+    const page = filteredLanguages.slice(start, start+languagesPerPage);
+
+    let html='';
+    page.forEach(language=>{
+      const isSel = Object.prototype.hasOwnProperty.call(selectedLanguages, language.id);
+      const level = isSel ? (selectedLanguages[language.id].level||'') : '';
+      html += `
+      <tr>
+        <td>${language.name||''}</td>
+        <td>
+          <select class="form-select language-level" name="languages[${language.id}][level]" ${isSel?'':'disabled'}>
+            <option value="">${T.profile.languages_select_level}</option>
+            <option value="مبتدئ جدًا" ${level==='مبتدئ جدًا'?'selected':''}>@json(__('profile.languages.level.a1'))</option>
+            <option value="مبتدئ" ${level==='مبتدئ'?'selected':''}>@json(__('profile.languages.level.a2'))</option>
+            <option value="ما قبل المتوسط" ${level==='ما قبل المتوسط'?'selected':''}>@json(__('profile.languages.level.b1'))</option>
+            <option value="متوسط" ${level==='متوسط'?'selected':''}>@json(__('profile.languages.level.b2'))</option>
+            <option value="فوق المتوسط" ${level==='فوق المتوسط'?'selected':''}>@json(__('profile.languages.level.c1'))</option>
+            <option value="متقدم جدًا" ${level==='متقدم جدًا'?'selected':''}>@json(__('profile.languages.level.c2'))</option>
+          </select>
+        </td>
+        <td class="text-center">
+          <input class="form-check-input language-checkbox" type="checkbox"
+                 name="languages[${language.id}][selected]" value="${language.id}" ${isSel?'checked':''}>
+        </td>
+      </tr>`;
+    });
+    $('#languagesTableBody').html(html);
+    renderLanguagesPagination();
+  }
+
+  function renderLanguagesPagination(){
+    const total = Math.max(1, Math.ceil(filteredLanguages.length/languagesPerPage));
+    let html = `
+      <li class="page-item ${currentLanguagesPage===1?'disabled':''}">
+        <a class="page-link" href="#" data-page="prev">${T.profile.pagination_prev}</a>
+      </li>`;
+    for(let i=1;i<=total;i++){
+      html += `<li class="page-item ${i===currentLanguagesPage?'active':''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+    }
+    html += `
+      <li class="page-item ${currentLanguagesPage===total?'disabled':''}">
+        <a class="page-link" href="#" data-page="next">${T.profile.pagination_next}</a>
+      </li>`;
+    $('#languagesPagination').html(html);
+  }
+
+  $('#languageFilter').on('keyup', function(){
+    const q = ($(this).val()||'').toLowerCase();
+    filteredLanguages = allLanguagesData.filter(l => (l.name||'').toLowerCase().includes(q));
+    currentLanguagesPage=1; renderLanguages();
+  });
+
+  $('#languagesPagination').on('click','a.page-link', function(e){
+    e.preventDefault();
+    const p = $(this).data('page');
+    const total = Math.max(1, Math.ceil(filteredLanguages.length/languagesPerPage));
+    if(p==='prev' && currentLanguagesPage>1) currentLanguagesPage--;
+    else if(p==='next' && currentLanguagesPage<total) currentLanguagesPage++;
+    else if(!isNaN(parseInt(p))) currentLanguagesPage = parseInt(p);
+    renderLanguages();
+  });
+
+  $(document).on('change', '.language-checkbox', function(){
+    const row = $(this).closest('tr');
+    const levelSelect = row.find('.language-level');
+    const id = parseInt($(this).val());
+    if(this.checked){
+      if(!levelSelect.val()) levelSelect.val('مبتدئ');
+      levelSelect.prop('disabled', false);
+      selectedLanguages[id] = { selected:true, level: levelSelect.val() };
+    }else{
+      levelSelect.prop('disabled', true);
+      delete selectedLanguages[id];
+    }
+  });
+  $(document).on('change', '.language-level', function(){
+    const id = parseInt($(this).closest('tr').find('.language-checkbox').val());
+    if(selectedLanguages[id]) selectedLanguages[id].level = $(this).val();
+  });
+
+  renderLanguages();
+
+  /* ===== Form submit ===== */
+  $('#profileForm').on('submit', function(e){
     e.preventDefault();
     const form = this;
 
-    $('.dynamic-skill-input').remove();
-    $('.dynamic-language-input').remove();
-
-    const invalidLanguages = [];
-    const validLanguagesData = {};
-
-    Object.keys(selectedLanguages).forEach(langId => {
-      const langIdNum = parseInt(langId);
-      if (isNaN(langIdNum) || langIdNum <= 0) return;
-
-      if (!selectedLanguages[langId].level) {
-        const langName = (allLanguagesData.find(l => l.id == langId) || {}).name || T.common.not_set;
-        invalidLanguages.push(langName);
-      } else {
-        validLanguagesData[langId] = { selected: true, level: selectedLanguages[langId].level };
+    // تحقق من اللغات بدون مستوى
+    const invalid = [];
+    const validLangs = {};
+    Object.keys(selectedLanguages).forEach(id=>{
+      const entry = selectedLanguages[id];
+      if(!entry.level){
+        const name = (allLanguagesData.find(l=>String(l.id)===String(id))||{}).name || T.common.not_set;
+        invalid.push(name);
+      }else{
+        validLangs[id] = { selected:true, level: entry.level };
       }
     });
-
-    if (invalidLanguages.length > 0) {
-      Swal.fire({
-        title: T.swal.error_title,
-        html: @json(__('profile.languages.select_level')) + '<br>' + invalidLanguages.join('<br>'),
-        icon: 'error',
-        confirmButtonColor: '#4e73df'
-      });
-      return false;
+    if(invalid.length){
+      Swal.fire({ title:T.swal.error_title, html: @json(__('profile.languages.select_level')) + '<br>' + invalid.join('<br>'), icon:'error' });
+      return;
     }
 
-    $('<input>').attr({
-      type: 'hidden',
-      name: 'skills_data',
-      value: JSON.stringify(allSelectedSkills.filter(id => id > 0)),
-      class: 'dynamic-skill-input'
+    // === skills_data كـ Object: { skillId: {level, description} }
+    $('.dynamic-skill-input, .dynamic-language-input').remove();
+
+    const skillsPayload = {};
+    Object.keys(selectedSkills).forEach(id => {
+      const e = selectedSkills[id] || {};
+      let d = (e.description || '').toString();
+      if (d.length > 1000) d = d.slice(0, 1000); // قص بسيط
+      const lvl = Math.max(1, Math.min(5, Number(e.level||3)));
+      skillsPayload[id] = { level: lvl, description: d };
+    });
+
+    $('<input>',{
+      type:'hidden', name:'skills_data',
+      value: JSON.stringify(skillsPayload),
+      class:'dynamic-skill-input'
     }).appendTo(form);
 
-    $('<input>').attr({
-      type: 'hidden',
-      name: 'languages_data',
-      value: JSON.stringify(validLanguagesData),
-      class: 'dynamic-language-input'
+    $('<input>',{
+      type:'hidden', name:'languages_data',
+      value: JSON.stringify(validLangs),
+      class:'dynamic-language-input'
     }).appendTo(form);
 
     Swal.fire({
-      title: T.swal.confirm_title,
-      text: T.swal.save_question,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: '#4e73df',
-      cancelButtonColor: '#d33',
-      confirmButtonText: T.swal.save_confirm,
-      cancelButtonText: T.swal.cancel
-    }).then((result) => { if (result.isConfirmed) form.submit(); });
+      title:T.swal.confirm_title, text:T.swal.save_question, icon:'question',
+      showCancelButton:true, confirmButtonText:T.swal.save_confirm, cancelButtonText:T.swal.cancel
+    }).then(res=>{ if(res.isConfirmed) form.submit(); });
   });
 
   @if (session('success'))
-    Swal.fire({
-      title: T.swal.success_title,
-      text: @json(session('success')),
-      icon: 'success',
-      confirmButtonColor: '#4e73df'
-    });
+    Swal.fire({ title:T.swal.success_title, text:@json(session('success')), icon:'success' });
   @endif
+
+  // keep navbar height in CSS var
+  (function(){
+    const root = document.documentElement;
+    const nav  = document.querySelector('.navbar.fixed-top') || document.querySelector('.navbar');
+    function sync(){ if(!nav) return; root.style.setProperty('--nav-h', Math.ceil(nav.getBoundingClientRect().height) + 'px'); }
+    sync(); window.addEventListener('resize', sync);
+  })();
 });
 </script>
 
 <script>
-/* ===== Remove image (i18n) ===== */
-document.addEventListener('DOMContentLoaded', function () {
-  const removeBtn = document.getElementById('removeImageBtn');
-  const profileImage = document.getElementById('profileImage');
-  const sidebarImage = document.getElementById('sidebarProfileImage');
+/* ====== (تبقى كما هي) سكربت مؤهلات منفصل إن وجد ====== */
+(function () {
+  const $form   = $('#qualificationsForm');
+  const $alert  = $('#qualificationsAlert');
+  const $button = $('#qualificationsSubmitBtn');
 
-  if (!removeBtn) return;
-
-  removeBtn.addEventListener('click', function () {
-    Swal.fire({
-      title: T.swal.delete_confirm_question,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: T.swal.delete_confirm,
-      cancelButtonText: T.swal.cancel
-    }).then((result) => {
-      if (!result.isConfirmed) return;
-
-      fetch('{{ route('profile.remove-image') }}', {
-        method: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': '{{ csrf_token() }}',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({})
-      })
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          const userGender = '{{ auth()->user()->gender }}';
-          const defaultImage = userGender === 'female'
-            ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png'
-            : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png';
-          if (profileImage) profileImage.src = defaultImage;
-          if (sidebarImage) sidebarImage.src = defaultImage + '?v=' + new Date().getTime();
-
-          const fileInput = document.getElementById('imageInput');
-          if (fileInput) fileInput.value = '';
-
-          Swal.fire(T.swal.success_title, T.swal.delete_success, 'success');
-        } else {
-          Swal.fire(T.swal.error_title, T.swal.delete_error, 'error');
-        }
-      })
-      .catch(() => Swal.fire(T.swal.error_title, T.swal.network_error, 'error'));
+  function autosize(el){
+    el.style.height = 'auto';
+    el.style.height = (el.scrollHeight + 2) + 'px';
+  }
+  function updateCount(el){
+    const id = el.id;
+    const cc = document.querySelector('.char-count[data-for="'+id+'"] .count');
+    if (cc) cc.textContent = el.value.length;
+  }
+  document.querySelectorAll('.skill-description').forEach(ta => {
+    autosize(ta); updateCount(ta);
+    ta.addEventListener('input', function(){
+      autosize(ta); updateCount(ta);
+      ta.classList.remove('is-invalid');
+      const sid = ta.id.replace('skill-desc-','');
+      $('#error-skill-'+sid).addClass('d-none').text('');
     });
   });
-});
-</script>
 
-<script>
-/* keep navbar height sync */
-(function(){
-  const root = document.documentElement;
-  const nav  = document.querySelector('.navbar.fixed-top') || document.querySelector('.navbar');
-  function syncNavH(){
-    if(!nav) return;
-    const h = Math.ceil(nav.getBoundingClientRect().height);
-    root.style.setProperty('--nav-h', h + 'px');
+  function showAlert(type, msg){
+    $alert.removeClass('d-none alert-success alert-danger alert-warning')
+          .addClass('alert-'+type)
+          .html(msg);
+    $alert[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  syncNavH();
-  window.addEventListener('resize', syncNavH);
+  function clearAlert(){ $alert.addClass('d-none').removeClass('alert-success alert-danger alert-warning').empty(); }
+
+  function setLoading(state){
+    const $spin = $button.find('.spinner-border');
+    const $txt  = $button.find('.btn-text');
+    if (state){
+      $button.attr('disabled', true);
+      $txt.addClass('d-none'); $spin.removeClass('د-none');
+    } else {
+      $button.attr('disabled', false);
+      $spin.addClass('d-none'); $txt.removeClass('d-none');
+    }
+  }
+
+  $form.on('submit', async function(e){
+    e.preventDefault();
+    clearAlert();
+
+    $('.skill-description').removeClass('is-invalid');
+    $('[id^="error-skill-"]').addClass('d-none').text('');
+
+    const url  = this.getAttribute('action');
+    const fd   = new FormData(this);
+    setLoading(true);
+
+    try{
+      const res = await axios.post(url, fd, { headers: { 'Accept': 'application/json' } });
+      const msg = (res.data && (res.data.message || res.data.success)) || (window.T?.swal?.updated_successfully) || 'تم التحديث بنجاح';
+      showAlert('success', msg);
+      if (window.Swal) {
+        Swal.fire({ toast: true, position: 'top-end', timer: 2000, showConfirmButton: false, icon: 'success', title: msg });
+      }
+    } catch (err){
+      const r = err?.response;
+      if (r?.status === 422 && r?.data?.errors){
+        const errs = r.data.errors;
+        let firstMsg = null;
+
+        Object.keys(errs).forEach(k => {
+          const match = k.match(/^skills\.(\d+)\.description$/);
+          if (match){
+            const sid = match[1];
+            const msg = Array.isArray(errs[k]) ? errs[k][0] : String(errs[k]);
+            const $ta = $('#skill-desc-'+sid);
+            $ta.addClass('is-invalid');
+            const $err = $('#error-skill-'+sid);
+            $err.removeClass('d-none').text(msg);
+            if (!firstMsg) firstMsg = msg;
+          }
+        });
+
+        showAlert('danger', firstMsg || (window.T?.swal?.delete_error) || 'تحقّق من الحقول.');
+      } else {
+        const msg = r?.data?.message || (window.T?.swal?.network_error) || 'حدث خطأ في الاتصال';
+        showAlert('danger', msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  });
 })();
 </script>
-

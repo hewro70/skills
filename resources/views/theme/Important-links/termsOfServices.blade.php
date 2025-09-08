@@ -6,7 +6,7 @@
 <body>
     <!-- ======= Header ======= -->
     @include(
-        'theme.Important-links.partials.header',
+        'theme.important-links.partials.header',
         ['title' => 'شروط الاستخدام لمهارات هب'],
         ['description' => 'شروط استخدام مهارات هب']
     )

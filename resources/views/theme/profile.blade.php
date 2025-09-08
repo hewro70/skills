@@ -18,14 +18,18 @@
               </p>
 
               <div class="profile-meta d-flex align-items-center flex-wrap gap-3">
-                <span class="chip chip-success">
+                {{--  <span class="chip chip-success">
                   <i class="bi bi-circle-fill"></i> {{ __('profile.available_now') }}
-                </span>
+                </span>  --}}
                 <span class="chip chip-primary">
                   <i class="bi bi-star-fill"></i> {{ __('profile.top_rated') }}
                 </span>
                 <span class="chip chip-muted">
-                  <i class="bi bi-clock"></i> {{ now()->format('h:i a') }} {{ __('profile.local_time') }}
+                 @if($user->is_mentor)
+  
+    <i class="bi bi-mortarboard-fill me-1"></i> {{ __('badges.mentor') ?? 'Mentor' }}
+
+@endif
                 </span>
               </div>
 
