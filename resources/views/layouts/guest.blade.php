@@ -4,8 +4,13 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <title>مهارات هب | Maharat Hub</title>
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+<meta name="description" content="Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.">
+
+<meta name="keywords" content="مهارات, مهارات هب, Maharat Hub, تبادل الخبرات, تبادل المعرفة, تعلم مهارات جديدة, تعليم مجاني, مشاركة المعرفة, منصة تعليمية, تعلم أونلاين, تطوير الذات, تعلم اللغات, تعلم البرمجة, تبادل ثقافات, تبادل خبرات, community learning, skill exchange, online learning, free learning, share knowledge, learn skills">
+
+
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

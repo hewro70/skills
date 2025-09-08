@@ -46,34 +46,33 @@
           <div class="col-md-8 col-lg-9 main-content d-flex flex-column" style="min-height:0;">
             <div class="card shadow-sm flex-grow-1 d-flex flex-column" style="min-height:0;">
 
-              {{-- Header --}}
-             {{-- Header --}}
-<div class="card-header bg-light d-flex justify-content-between align-items-center">
-  <div class="d-flex align-items-center">
+      {{-- Header --}}
+<div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+  <div class="d-flex align-items-center flex-grow-1 min-w-0">
     <img src="{{ $otherUser->image_url }}" class="rounded-circle me-3" width="50" height="50" alt="{{ $otherUser->fullName() }}">
-    <h5 class="mb-0">{{ $otherUser->fullName() }}</h5>
+    <h5 class="mb-0 text-truncate">{{ $otherUser->fullName() }}</h5>
   </div>
 
-  <div class="d-flex gap-2">
-    {{--  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#premiumModal">
-      <i class="bi bi-star-fill me-1"></i> {{ __('premium.go_premium') }}
-    </button>  --}}
-     @if($reviewEligible)
-    <button class="btn btn-success btn-sm" id="openReviewBtn" data-bs-toggle="modal" data-bs-target="#reviewModal">
-      <i class="bi bi-hand-thumbs-up me-1"></i>{{ __('conversations.buttons.review') }}
-    </button>
-  @else
-    <button class="btn btn-outline-secondary btn-sm" id="openReviewBtn" disabled
-            data-bs-toggle="tooltip"
-            title="{{ trans_choice('conversations.review.remaining', $remainingToReview, ['n'=>$remainingToReview]) }}">
-      <i class="bi bi-hand-thumbs-up me-1"></i>{{ __('conversations.buttons.review') }}
-    </button>
-  @endif
-    {{--  <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#exchangeModal">
-      <i class="bi bi-arrow-left-right me-1"></i> {{ __('conversations.header.exchange_request_button') }}
-    </button>  --}}
+  <div class="d-flex gap-2 header-actions">
+    @php $lblReview = app()->getLocale() === 'ar' ? 'تقييم' : 'Review'; @endphp
+
+    @if($reviewEligible)
+      <button class="btn btn-success btn-sm" id="openReviewBtn" data-bs-toggle="modal" data-bs-target="#reviewModal" aria-label="{{ $lblReview }}">
+        <i class="bi bi-hand-thumbs-up me-1"></i>
+        <span>{{ $lblReview }}</span>
+      </button>
+    @else
+      <button class="btn btn-outline-secondary btn-sm" id="openReviewBtn" disabled
+              data-bs-toggle="tooltip"
+              aria-label="{{ $lblReview }}"
+              title="{{ trans_choice('conversations.review.remaining', $remainingToReview, ['n'=>$remainingToReview]) }}">
+        <i class="bi bi-hand-thumbs-up me-1"></i>
+        <span>{{ $lblReview }}</span>
+      </button>
+    @endif
   </div>
 </div>
+
 
 
               {{-- Tabs --}}
@@ -272,6 +271,23 @@
 #pane-exchanges .card-footer{ padding:.5rem .75rem; border-top:1px solid #eef1f4; }
 </style>
 @endpush
+@push('styles')
+<style>
+/* --- تحسينات استجابة زر Review على الموبايل --- */
+.card-header .header-actions{ flex-wrap:wrap; }
+@media (max-width: 576px){
+  .card-header{ row-gap:.5rem; }
+  .card-header .header-actions{ width:100%; }
+  .card-header .header-actions .btn{
+    flex:1 1 48%;
+    white-space:nowrap;
+  }
+  /* اسم المستخدم ما يلف ويقص بطريقة أنظف */
+  .card-header h5.text-truncate{ max-width: 65vw; }
+}
+</style>
+@endpush
+
 
 @push('scripts')
 <script>

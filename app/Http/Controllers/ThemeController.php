@@ -179,11 +179,11 @@ private function loadData(Request $request): array
     }
     public function privacyPolicy()
     {
-        return view('theme.Important-links.privacy-policy');
+        return view('theme.important-links.privacy-policy');
     }
     public function termsOfServices()
     {
-        return view('theme.Important-links.termsOfServices');
+        return view('theme.important-links.termsOfServices');
     }
 
     public function showProfile(User $user)

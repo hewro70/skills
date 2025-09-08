@@ -15,7 +15,6 @@ class ChatMessageSent implements ShouldBroadcastNow
 
     public function __construct(public Message $message)
     {
-        // نضمن وجود المستخدمين
         $this->message->loadMissing('conversation.users');
     }
 
@@ -24,7 +23,6 @@ class ChatMessageSent implements ShouldBroadcastNow
         return 'message.sent';
     }
 
-    /** ابث على قناتين: محادثة + قنوات المستخدمين (باستثناء المرسل) */
     public function broadcastOn(): array
     {
         $channels = [ new PrivateChannel('conversation.' . $this->message->conversation_id) ];
@@ -48,8 +46,7 @@ class ChatMessageSent implements ShouldBroadcastNow
                 'user_id'         => $this->message->user_id,
                 'conversation_id' => $this->message->conversation_id,
             ],
-            // بيانات مختصرة لواجهة الجرس
-            'title' => __('conversations.new_message_title', [], app()->getLocale() ?? 'ar'), // اختياري
+            'title' => __('conversations.new_message_title', [], app()->getLocale() ?? 'ar'),
             'body'  => str($this->message->body)->limit(80),
             'url'   => route('conversations.show', $this->message->conversation_id),
             'icon'  => 'fa-message'

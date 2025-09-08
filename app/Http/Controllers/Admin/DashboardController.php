@@ -15,17 +15,15 @@ use App\Models\Classification;
 
 use Carbon\Carbon;
 
-use Illuminate\Support\Facades\DB; // ✅ استخدام DB Facade بشكل أنظف
+use Illuminate\Support\Facades\DB; 
 
 class DashboardController extends Controller
 {
    
 public function index(Request $request)
 {
-    // ✅ إجمالي عدد المستخدمين
     $totalUsers = User::count();
 
-    // ✅ عدد المستخدمين الجدد هذا الأسبوع
     $newUsersToday = User::whereBetween('created_at', [
             Carbon::now()->startOfWeek(),
             Carbon::now()->endOfWeek()
@@ -34,26 +32,21 @@ public function index(Request $request)
         ->whereYear('created_at', Carbon::now()->year)
         ->count();
 
-    // ✅ جميع الدول من جدول countries لعرضها في القائمة
     $usersByCountry = Country::orderBy('name')->get();
 
-    // ✅ توزيع المستخدمين حسب الجنس
     $usersByGender = User::select('gender', DB::raw('count(*) as total'))
                          ->groupBy('gender')
                          ->get();
 
-    // ✅ التصفية
     $selectedCountry = $request->input('country');
     $selectedGender  = $request->input('gender');
 
-    // ✅ عدد المستخدمين في الدولة المحددة
     $countryResult = null;
     if ($selectedCountry) {
         $countryResult = User::where('country_id', $selectedCountry)->count();
     }
 
 
-    // ✅ عدد المستخدمين حسب الجنس المحدد
     $genderResult = null;
     if ($selectedGender) {
         $genderResult = User::where('gender', $selectedGender)->count();
@@ -70,7 +63,6 @@ $topSkills = Skill::select('skills.*')
     ->limit(5)
     ->get();
 
-// ✅ أعلى تصنيف حسب عدد التبادلات (نجمع من الجهتين)
 $topClassification = DB::table('skills')
     ->leftJoin('exchanges as e1', 'skills.id', '=', 'e1.sender_skill_id')
     ->leftJoin('exchanges as e2', 'skills.id', '=', 'e2.receiver_skill_id')
@@ -128,7 +120,6 @@ $activeChats = DB::table('conversation_user')
      $totalChats  = Conversation::count();
 
 
-// ✅ Percentage calculation (avoid division by zero)
 $activeChatRate = $totalChats > 0
     ? round(($activeChats / $totalChats) * 100, 2)
     : 0;

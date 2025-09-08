@@ -19,11 +19,12 @@
 
 
 
-  
+    "notifications.new_messages": "رسالة جديدة",
+  "notifications.new_invitations": "دعوة",
   "home.hero.bg_alt": "خلفية مهارات هب",
   "home.hero.badge": "مهارات هَب · مجتمع تبادل المهارات",
-  "home.hero.title": "تبادل المهارات وأثــر المجتمع",
-  "home.hero.subtitle": "تواصل مع المتعلمين والمتحمسين حول العالم. شارِك المعرفة مجاناً وتعلّم سوياً.",
+  "home.hero.title": "شارك مهاراتك واصنع فرقاً",
+  "home.hero.subtitle": "تواصل مع أشخاص ملهمين من كل مكان، تبادل المعرفة مجاناً، وتعلّم مع الآخرين",
   "home.hero.search.aria": "بحث عن المهارات",
   "home.hero.search.placeholder": "ابحَث عن مهارة أو موضوع…",
   "home.hero.select.aria": "نوع المهارة",
@@ -285,11 +286,11 @@
 "premium.go_premium": "اشترك في بريميوم",
   "conversations.errors.send_failed": "تعذر الإرسال",
   "conversations.errors.unexpected": "حدث خطأ غير متوقع",
-  "profile.i_am_mentor": "أنا معلم",
+  "profile.i_am_mentor": "أنا مرشد",
   "profile.i_am_mentor_help": "حدد هذا الخيار إذا كنت ترغب في تعليم مهاراتك للآخرين.",
-  "profile.role.mentor": "معلم",
-  "badges.mentor": "معلم",
-  "filters.mentor_only": "عرض المعلمين فقط",
+  "profile.role.mentor": "مرشد",
+  "badges.mentor": "مرشد",
+  "filters.mentor_only": "عرض المرشدين فقط",
   "common.choose": "اختر",
   "common.close": "إغلاق",
   "common.cancel": "إلغاء",

@@ -15,10 +15,9 @@ class ExchangeUpdated implements ShouldBroadcastNow
 
     public function __construct(
         public Exchange $exchange,
-        public string   $action,         // created | accepted | accepted_teach_only | rejected | cancelled
-        public int      $targetUserId    // مين بدنا نوصل له الإشعار
+        public string   $action,        
+        public int      $targetUserId   
     ) {
-        // تحميل خفيف للأسماء إن لزم
         $this->exchange->loadMissing(['sender','receiver','senderSkill','receiverSkill']);
     }
 
@@ -37,7 +36,6 @@ class ExchangeUpdated implements ShouldBroadcastNow
         $ex  = $this->exchange;
         $url = route('conversations.show', $ex->conversation_id);
 
-        // عنوان/نص مترجمين
         $title = __('exchanges.title');
         $body  = match ($this->action) {
             'created'             => __('exchanges.notify.created', ['name' => $ex->sender?->fullName() ?? '']),
@@ -60,7 +58,7 @@ class ExchangeUpdated implements ShouldBroadcastNow
             'url'             => $url,
             'title'           => $title,
             'body'            => $body,
-            'icon'            => 'fa-people-arrows', // أيقونة مناسبة
+            'icon'            => 'fa-people-arrows', 
         ];
     }
 }

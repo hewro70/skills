@@ -3,7 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ __('app.title') }}</title>
+<title>Maharat Hub</title>
+
+<meta name="description" content="Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.">
+
+<meta name="keywords" content="Maharat Hub, skill exchange, share knowledge, online learning, free learning, community learning, learn skills, knowledge exchange, connect with people, global learning">
+
+<link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
+
+{{-- Open Graph for social & SEO --}}
+@php
+  $TITLE = 'Maharat Hub';
+  $DESC  = 'Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.';
+@endphp
+
+<title>{{ $TITLE }}</title>
+<meta name="description" content="{{ $DESC }}">
+<meta name="keywords" content="Maharat Hub, skill exchange, share knowledge, online learning, free learning, community learning">
+
+<link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
+
+<!-- Open Graph -->
+<meta property="og:title" content="{{ $TITLE }}">
+<meta property="og:description" content="{{ $DESC }}">
+<meta property="og:image" content="{{ asset('img/logo.png') }}">
+<meta property="og:url" content="{{ url('/') }}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+
+<!-- Robots (يسمح بأطول سنِّبت ممكن) -->
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+
 
   <!-- Bootswatch (Lux) -->
 <!-- Bootstrap الأساسي -->
@@ -119,6 +150,76 @@
 .premium-pill .bi-crown{ color:#111; }
 
   </style>
+  <style>
+/* زر الجرس: مربع صغير مع تموضع نسبي */
+.notif-btn{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px; height: 38px;
+  line-height: 1;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+/* البادج: نفس أبعاد pill-badge تقريبًا، وباستخدام منطق RTL/LTR */
+.notif-badge{
+  position: absolute;
+  inset-block-start: 0;            /* top: 0 (يدعم RTL/LTR) */
+  inset-inline-start: 100%;        /* عند نهاية الجهة البادئة (يمين في RTL/يسار في LTR) */
+  transform: translate(-50%, -40%);/* ازاحة خفيفة لأعلى ولداخل */
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 .35rem;
+  border-radius: 999px;
+  background: #dc3545;             /* bg-danger */
+  color: #fff;
+  font-size: .75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;          /* نفس ستايل العدادات الأخرى */
+  box-sizing: border-box;
+  font-weight: 600;
+}
+.notif-badge{ z-index: 5; }
+
+/* في RTL نعكس اتجاه الإزاحة الأفقية */
+[dir="rtl"] .notif-badge{
+  transform: translate(50%, -40%);
+}
+/* 1) بادنج داخلي للقائمة + مظهر ألطف للعناصر */
+.notif-menu { padding:.5rem; }
+#notifList { padding:.25rem; } /* مسافة حول العناصر */
+#notifList .item{
+  display:flex; gap:.6rem; align-items:flex-start;
+  padding:.6rem .75rem; border-radius:.5rem;
+}
+#notifList .item:hover{ background:#f8f9fa; }
+#notifList .title{ font-weight:600; }
+#notifList .meta{ font-size:.8rem; color:#6c757d; }
+
+/* 2) البادج: نزّلها لتحت وثبّت المحاذاة لوجيكياً (RTL/LTR) */
+.notif-btn{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; padding:0; background:transparent; border:0; line-height:1; }
+.notif-badge{
+  position:absolute;
+  inset-block-start: 6px;          /* ← نزّل البادج شوي */
+  inset-inline-start: 100%;        /* عند نهاية الجهة (يمين RTL/يسار LTR) */
+  transform: translate(-55%, 0);   /* إدخال خفيف للداخل */
+  min-width:1.35rem; height:1.35rem; padding:0 .35rem; border-radius:999px;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:600; box-sizing:border-box; z-index:5;
+  border:2px solid #fff;
+  background:#f59e0b;              /* 3) نفس لون أخواته */
+  color:#fff;
+}
+[dir="rtl"] .notif-badge{ transform: translate(55%, 0); } /* عكس الإزاحة في RTL */
+
+
+</style>
+
 
   @auth
   <meta name="user-id" content="{{ auth()->id() }}">
@@ -143,7 +244,7 @@
       'formId'  => 'subscribeForm',
       // إعداداتك الحالية لو بدك
       'config'  => [
-        'price'        => '10 USD',
+        'price'        => '5 USD',
         'wallet_email' => 'wallet@example.com',
         'wallet_name'  => 'Premium Wallet',
         'paypal'       => 'payments@yourapp.com',
@@ -210,21 +311,64 @@
             </ul>
           </div>
 
+   
+    {{-- Bell + Dropdown --}}
+{{-- Bell + Dropdown --}}
+<div class="dropdown" id="notifDropdownWrap">
+  <button class="notif-btn" id="notifBellBtn"
+          data-bs-toggle="dropdown" aria-expanded="false"
+          aria-label="@if(app()->isLocale('ar')) الإشعارات @else Notifications @endif">
+    <i class="bi bi-bell fs-5"></i>
+    <span id="notif-badge" class="notif-badge d-none">0</span>
+  </button>
+
+  <div class="dropdown-menu dropdown-menu-end shadow-sm p-0 notif-menu"
+       aria-labelledby="notifBellBtn" style="min-width:320px">
+    <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+      <strong>@if(app()->isLocale('ar')) الإشعارات @else Notifications @endif</strong>
+      <button type="button" class="btn btn-sm btn-link" id="notifRefreshBtn">
+        @if(app()->isLocale('ar')) تحديث @else Refresh @endif
+      </button>
+    </div>
+
+    <div id="notifList" style="max-height:360px; overflow:auto;">
+      <div class="p-3 text-muted small" id="notifEmpty">
+        @if(app()->isLocale('ar')) لا توجد إشعارات جديدة @else No new notifications @endif
+      </div>
+    </div>
+
+    <div class="border-top px-3 py-2 small text-center">
+      <a href="{{ route('conversations.index') }}" class="text-decoration-none me-2">
+        <i class="bi bi-chat-dots me-1"></i>@if(app()->isLocale('ar')) الرسائل @else Messages @endif
+      </a>
+      <a href="{{ route('invitations.index') }}" class="text-decoration-none">
+        <i class="bi bi-envelope-open me-1"></i>@if(app()->isLocale('ar')) الدعوات @else Invitations @endif
+      </a>
+    </div>
+  </div>
+</div>
+
           
-          <nav class="d-none d-md-flex align-items-center gap-2">
-            <a href="{{ route('conversations.index') }}" class="pill-link">
-              {{ __('auth.messages') ?? 'الرسائل' }}
-              <span id="count-chats" class="pill-badge" style="display:none">0</span>
-            </a>
-            <a href="{{ route('invitations.index') }}" class="pill-link">
-              {{ __('auth.invitations') ?? 'الدعوات' }}
-              <span id="count-invitations" class="pill-badge" style="display:none">0</span>
-            </a>
-            {{--  <a href="{{ route('exchanges.index') }}" class="pill-link">
-              {{ __('auth.exchanges') ?? 'التبادلات' }}
-              <span id="count-exchanges" class="pill-badge" style="display:none">0</span>
-            </a>  --}}
-              @if(!$isPremium)
+<nav class="d-none d-md-flex align-items-center gap-2">
+  <a href="{{ route('conversations.index') }}" class="pill-link">
+    <i class="bi bi-chat-left-text icon-gap"></i>
+    {{ __('auth.messages') ?? 'الرسائل' }}
+    <span id="count-chats" class="pill-badge" style="display:none">0</span>
+  </a>
+
+  <a href="{{ route('invitations.index') }}" class="pill-link">
+    <i class="bi bi-envelope-open icon-gap"></i>
+    {{ __('auth.invitations') ?? 'الدعوات' }}
+    <span id="count-invitations" class="pill-badge" style="display:none">0</span>
+  </a>
+
+  {{--  <a href="{{ route('exchanges.index') }}" class="pill-link">
+    <i class="bi bi-arrow-left-right icon-gap"></i>
+    {{ __('auth.exchanges') ?? 'التبادلات' }}
+    <span id="count-exchanges" class="pill-badge" style="display:none">0</span>
+  </a>  --}}
+
+  @if(!$isPremium)
     <button class="premium-pill ms-1"
             data-bs-toggle="modal"
             data-bs-target="#premiumModal"
@@ -249,9 +393,9 @@
       <div class="d-flex align-items-center gap-3 order-3">
         <div class="desktop-nav d-none d-xl-flex">
           <ul class="navbar-nav flex-row gap-1">
-            <li class="nav-item">
-              <a href="{{ route('theme.index') }}" class="nav-link @yield('index-active')">{{ __('nav.home') }}</a>
-            </li>
+            <!--<li class="nav-item">-->
+            <!--  <a href="{{ route('theme.index') }}" class="nav-link @yield('index-active')">{{ __('nav.home') }}</a>-->
+            <!--</li>-->
                         <li class="nav-item"><a href="{{ route('theme.skills') }}" class="nav-link @yield('trainers-active')">{{ __('nav.skills') }}</a></li>
 
             @guest
@@ -284,11 +428,11 @@
   <nav id="navmenu" class="border-top bg-white">
     <div class="container-xl py-2">
       <ul class="navbar-nav">
-        <li class="nav-item">
-          <a href="{{ route('theme.index') }}" class="nav-link @yield('index-active')">
-            <i class="fas fa-home me-2"></i> {{ __('nav.home') }}
-          </a>
-        </li>
+        <!--<li class="nav-item">-->
+        <!--  <a href="{{ route('theme.index') }}" class="nav-link @yield('index-active')">-->
+        <!--    <i class="fas fa-home me-2"></i> {{ __('nav.home') }}-->
+        <!--  </a>-->
+        <!--</li>-->
         <li class="nav-item"><a href="{{ route('theme.skills') }}" class="nav-link @yield('trainers-active')">{{ __('nav.skills') }}</a></li>
           @guest
               <li class="nav-item"><a href="{{ route('theme.about') }}" class="nav-link @yield('about-active')">{{ __('nav.about') }}</a></li>
@@ -425,5 +569,163 @@
   };
 })();
 </script>
+<script>
+(function(){
+  "use strict";
+  const meta  = n => document.querySelector(`meta[name="${n}"]`)?.content;
+  const userId = meta('user-id');          // موجود لديك أصلاً
+  if (!userId) return;                     // فقط للمسجّلين
+
+  const countsUrl = "{{ route('notifications.counts') }}"; // نفس المسار الموجود عندك
+  const POLL_MS   = 60 * 1000;             // كل دقيقة
+  const MAX_FEED  = 10;                    // أقصى عناصر نعرضها داخل القائمة
+
+  // عناصر DOM
+const badge = document.getElementById('notif-badge') || document.getElementById('notifBadge');
+  const list   = document.getElementById('notifList');
+  const empty  = document.getElementById('notifEmpty');
+  const btnRef = document.getElementById('notifRefreshBtn');
+
+  // مساعدات عرض
+  function setBadge(n){
+    if(!badge) return;
+    const v = Number(n||0);
+    badge.textContent = v;
+    badge.classList.toggle('d-none', v <= 0);
+  }
+
+  function clearFeed(){
+    if (!list) return;
+    [...list.querySelectorAll('.item')].forEach(el=>el.remove());
+  }
+
+  function ensureEmptyState(){
+    if(!list || !empty) return;
+    const hasItems = !!list.querySelector('.item');
+    empty.style.display = hasItems ? 'none' : '';
+  }
+
+  function addFeedItem({icon='bi-bell', title='', body='', href='#', at=''}){
+    if(!list) return;
+    const a = document.createElement('a');
+    a.href = href || '#';
+    a.className = 'item text-reset text-decoration-none';
+    a.innerHTML = `
+      <i class="bi ${icon} fs-5 mt-1"></i>
+      <div class="flex-grow-1">
+        <div class="title">${title}</div>
+        ${body ? `<div class="small">${body}</div>` : ''}
+        ${at   ? `<div class="meta">${at}</div>` : ''}
+      </div>
+    `;
+    list.prepend(a);
+    // قصّ القائمة
+    const items = list.querySelectorAll('.item');
+    if (items.length > MAX_FEED) items[items.length-1].remove();
+    ensureEmptyState();
+  }
+
+  // نحول أرقام counts إلى بنود قابلة للعرض داخل القائمة
+  function renderSyntheticFeed(d){
+    clearFeed();
+    const msgs = Number(d?.chats||0);
+    const invs = Number(d?.invitations||0);
+    const exs  = Number(d?.exchanges||0);
+
+    if (msgs>0) addFeedItem({
+      icon:'bi-chat-dots',
+      title:"{{ __('auth.messages') ?? 'Messages' }}",
+      body:"{{ __('notifications.new_messages') ?? 'You have new conversations to reply to.' }}",
+      href:"{{ route('conversations.index') }}"
+    });
+    if (invs>0) addFeedItem({
+      icon:'bi-envelope-open',
+      title:"{{ __('auth.invitations') ?? 'Invitations' }}",
+      body:"{{ __('notifications.new_invitations') ?? 'You have pending invitations.' }}",
+      href:"{{ route('invitations.index') }}"
+    });
+    if (exs>0) addFeedItem({
+      icon:'bi-arrow-left-right',
+      title:"{{ __('auth.exchanges') ?? 'Exchanges' }}",
+      body:"{{ __('notifications.new_exchanges') ?? 'You have exchange requests awaiting action.' }}",
+      href:"{{ route('invitations.index') }}#exchanges"
+    });
+
+    ensureEmptyState();
+  }
+
+  // جلب العدّادات وتحديث الشارة + القائمة
+  async function fetchCounts(){
+    try{
+      const r = await fetch(countsUrl, { headers:{'Accept':'application/json'} });
+      const d = await r.json();
+      const total = Number(d?.total||0);
+      setBadge(total);
+      renderSyntheticFeed(d);
+    }catch(e){
+      // تجاهل الخطأ بهدوء
+    }
+  }
+
+  // أول تحميل + كل دقيقة
+  fetchCounts();
+  const poller = setInterval(fetchCounts, POLL_MS);
+
+  // زر تحديث داخل الـDropdown
+  btnRef?.addEventListener('click', (e)=>{ e.preventDefault(); fetchCounts(); });
+
+  // === دعم Real-time (اختياري إذا Pusher مفعل) ===
+  const pusherKey = meta('pusher-key');
+  const cluster   = meta('pusher-cluster') || 'mt1';
+  const csrf      = meta('csrf-token');
+
+  if (window.Pusher && pusherKey) {
+    const pusher = new Pusher(pusherKey, {
+      cluster,
+      forceTLS:true,
+      authEndpoint:'/broadcasting/auth',
+      auth: { headers: { 'X-CSRF-TOKEN': csrf } }
+    });
+    const channel = pusher.subscribe('private-App.Models.User.' + userId);
+
+    // لما توصلك دعوة جديدة
+    channel.bind('invitation.sent', (e)=>{
+      setTimeout(fetchCounts, 200); // جِب الأرقام
+      addFeedItem({
+        icon:'bi-envelope-open',
+        title: e?.title || "{{ __('auth.invitations') ?? 'Invitation' }}",
+        body:  e?.body  || '',
+        href:  e?.url   || "{{ route('invitations.index') }}",
+        at:    e?.at    || new Date().toLocaleString()
+      });
+    });
+
+    // لما توصلك رسالة جديدة
+    channel.bind('message.sent', (e)=>{
+      setTimeout(fetchCounts, 200);
+      addFeedItem({
+        icon:'bi-chat-dots',
+        title:"{{ __('auth.messages') ?? 'Message' }}",
+        body: (e?.from ? ("{{ __('notifications.from') ?? 'From' }}: " + e.from) : ''),
+        href:  e?.url || "{{ route('conversations.index') }}",
+        at:    e?.at  || new Date().toLocaleString()
+      });
+    });
+
+    // تحديثات التبادلات
+    channel.bind('exchange.updated', (e)=>{
+      setTimeout(fetchCounts, 200);
+      addFeedItem({
+        icon:'bi-arrow-left-right',
+        title:"{{ __('auth.exchanges') ?? 'Exchange' }}",
+        body: e?.title || "{{ __('notifications.exchange_update') ?? 'Exchange updated.' }}",
+        href: e?.url   || "{{ route('invitations.index') }}#exchanges",
+        at:   e?.at    || new Date().toLocaleString()
+      });
+    });
+  }
+})();
+</script>
+
 </body>
 </html>

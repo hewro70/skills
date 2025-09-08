@@ -10,8 +10,7 @@ class Classification extends Model
 {
     use HasFactory, HasTranslations;
 
-    protected $fillable = ['name']; // ما تحتاج 'id'
-
+    protected $fillable = ['name']; 
     public $translatable = ['name'];
 
     public function skills()
@@ -19,7 +18,6 @@ class Classification extends Model
         return $this->hasMany(Skill::class);
     }
 
-    /* سكوبات مساعدة */
     public function scopeWhereNameLike($q, string $term, ?string $locale = null)
     {
         $locale = $locale ?? app()->getLocale();
@@ -29,7 +27,6 @@ class Classification extends Model
     public function scopeOrderByTranslatedName($q, ?string $locale = null, string $dir = 'asc')
     {
         $locale = $locale ?? app()->getLocale();
-        // MySQL
         return $q->orderByRaw("LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"$locale\"'))) $dir");
     }
 }

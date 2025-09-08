@@ -2,6 +2,34 @@
 @section('index-active', 'active')
 
 @section('content')
+<title>Maharat Hub</title>
+
+<meta name="description" content="Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.">
+
+<meta name="keywords" content="Maharat Hub, skill exchange, share knowledge, online learning, free learning, community learning, learn skills, knowledge exchange, connect with people, global learning">
+
+
+{{-- Open Graph for social & SEO --}}
+<meta property="og:title" content="Maharat Hub">
+<meta property="og:description" content="Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.">
+<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('favicon-192x192.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+<meta property="og:url" content="https://maharathub.com">
+<meta property="og:type" content="website">
+
+{{-- Schema.org for Google/Bing --}}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "Maharat Hub",
+  "url": "https://maharathub.com",
+  "description": "Connect with people globally to share knowledge, learn new skills, and exchange expertise for free."
+}
+</script>
+
   <link rel="stylesheet" href="{{ asset('assets/css/home.css') }}">
 
   {{-- ================== HERO ================== --}}

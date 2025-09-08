@@ -54,7 +54,7 @@
   <div class="talent-card">
     {{-- Header --}}
     <div class="talent-header">
-      <img src="{{ $user->image_url }}" alt="Talent" class="talent-avatar">
+      <img src="{{ $user->getImageUrlAttribute()}}" alt="Talent" class="talent-avatar">
       <div class="talent-info">
         <h4 class="talent-name">{{ $user->fullName() }}</h4>
 
@@ -148,90 +148,132 @@
   </div>
 @endforelse
 
-
 <script>
-document.addEventListener('click', function(e){
-  const btn = e.target.closest('.js-open-invite');
-  if(!btn) return;
+(function(){
+  // فتح المودال وتعبئته
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest('.js-open-invite');
+    if(!btn) return;
 
-  // اقرا بيانات الزر
-  const userId   = btn.dataset.userId;
-  const userName = btn.dataset.userName || '';
-  const isPrem   = btn.dataset.isPremiumViewer === '1';
-  const remaining = btn.dataset.remaining || '0';
-  const freeLimit = btn.dataset.freeLimit || '5';
+    const userId    = btn.dataset.userId;
+    const userName  = btn.dataset.userName || '';
+    const isPrem    = btn.dataset.isPremiumViewer === '1';
+    const remaining = btn.dataset.remaining || '0';
+    const freeLimit = btn.dataset.freeLimit || '5';
 
-  // عبي المودال
-  const titleEl  = document.getElementById('globalInviteTitle');
-  const userIdEl = document.getElementById('inviteUserId');
-  const freeBox  = document.getElementById('inviteFreeBox');
-  const premBox  = document.getElementById('invitePremiumBox');
-  const msgEl    = document.getElementById('inviteMessage');
-  const remEl    = document.getElementById('inviteRemaining');
-  const limEl    = document.getElementById('inviteFreeLimit');
-  const alertEl  = document.getElementById('globalInviteAlert');
+    const titleEl  = document.getElementById('globalInviteTitle');
+    const userIdEl = document.getElementById('inviteUserId');
+    const freeBox  = document.getElementById('inviteFreeBox');
+    const premBox  = document.getElementById('invitePremiumBox');
+    const msgEl    = document.getElementById('inviteMessage');
+    const remEl    = document.getElementById('inviteRemaining');
+    const limEl    = document.getElementById('inviteFreeLimit');
+    const alertEl  = document.getElementById('globalInviteAlert');
 
-  titleEl.textContent = 'إرسال دعوة إلى ' + userName;
-  userIdEl.value = userId;
+    titleEl.textContent = 'إرسال دعوة إلى ' + userName;
+    userIdEl.value = userId;
 
-  // نظّف الحالة السابقة
-  alertEl.className = 'd-none';
-  alertEl.textContent = '';
-  if(msgEl){ msgEl.value = ''; }
+    alertEl.className = 'd-none';
+    alertEl.textContent = '';
+    if(msgEl){ msgEl.value = ''; }
 
-  // أظهر البوكس المناسب
-  if(isPrem){
-    premBox.classList.remove('d-none');
-    freeBox.classList.add('d-none');
-  }else{
-    freeBox.classList.remove('d-none');
-    premBox.classList.add('d-none');
-    remEl.textContent = remaining;
-    limEl.textContent = freeLimit;
-  }
-});
-
-document.addEventListener('submit', async function(e){
-  const form = e.target.closest('#globalInviteForm');
-  if(!form) return;
-
-  e.preventDefault();
-
-  const action   = form.dataset.action;
-  const btn      = form.querySelector('button[type="submit"]');
-  const spinner  = btn.querySelector('.spinner-border');
-  const sendTxt  = btn.querySelector('.send-text');
-  const alertBox = document.getElementById('globalInviteAlert');
-
-  const fd = new FormData(form);
-
-  btn.disabled = true; spinner.classList.remove('d-none'); sendTxt.textContent = 'جارٍ الإرسال…';
-
-  try{
-    const res  = await fetch(action, {
-      method: 'POST',
-      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-      body: fd
-    });
-    const data = await res.json();
-
-    alertBox.classList.remove('d-none','alert-success','alert-warning','alert-danger','mt-3');
-    alertBox.classList.add('alert','mt-3', res.ok ? 'alert-success' : (res.status===422 ? 'alert-warning' : 'alert-danger'));
-    alertBox.textContent = data.message || (res.ok ? 'تم إرسال الدعوة.' : 'تعذّر إرسال الدعوة.');
-
-    if(res.ok){
-      setTimeout(()=>{
-        const modalEl = document.getElementById('globalInviteModal');
-        const m = bootstrap.Modal.getInstance(modalEl);
-        m && m.hide();
-      }, 900);
+    if(isPrem){
+      premBox.classList.remove('d-none');
+      freeBox.classList.add('d-none');
+    }else{
+      freeBox.classList.remove('d-none');
+      premBox.classList.add('d-none');
+      if(remEl) remEl.textContent = remaining;
+      if(limEl) limEl.textContent = freeLimit;
     }
-  }catch(_){
-    alertBox.classList.remove('d-none','alert-success','alert-warning');
-    alertBox.classList.add('alert','alert-danger','mt-3');
-    alertBox.textContent = 'حدث خطأ غير متوقع.';
-  }finally{
-    btn.disabled = false; spinner.classList.add('d-none'); sendTxt.textContent = 'إرسال';
-  }
-});
+  });
+
+  // إرسال المودال مع فحص الأهلية
+  document.addEventListener('submit', async function(e){
+    const form = e.target.closest('#globalInviteForm');
+    if(!form) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+    // منع الضغط المزدوج
+    if (form.dataset.busy === '1') return;
+    form.dataset.busy = '1';
+
+    // 1) فحص الأهلية (تسجيل الدخول + 100% اكتمال + حدود مجانية)
+    try{
+      const chk = await fetch(`{{ route('invitations.check') }}`, {
+        method: 'GET',
+        headers: { 'X-Requested-With':'XMLHttpRequest' },
+        credentials: 'same-origin'
+      });
+      const data = await chk.json();
+
+      if (data.status === 'unauthenticated') {
+        await Swal.fire({ icon:'warning', title:'غير مسجّل', text:'يرجى تسجيل الدخول أولاً.' });
+        window.location.href = `{{ route('login') }}`;
+        form.dataset.busy = '0';
+        return;
+      }
+      if (data.status === 'incomplete') {
+        await Swal.fire({
+          icon:'info',
+          title:'الملف الشخصي غير مكتمل',
+          html:`يجب إكمال ملفك الشخصي 100% قبل إرسال الدعوات.<br>
+                <small>نسبة الاكتمال الحالية: <b>${data.completion_percentage ?? 0}%</b></small><br>
+                <a href="{{ route('myProfile') }}" class="btn btn-primary mt-2">إكمال الملف الآن</a>`
+        });
+        form.dataset.busy = '0';
+        return;
+      }
+      if (data.status === 'limit_reached') {
+        await Swal.fire({ icon:'info', title:'انتهى الحد المجاني', text: data.message || 'لقد استهلكت جميع الدعوات المتاحة.' });
+        form.dataset.busy = '0';
+        return;
+      }
+      // (status === 'ok') → كمّل إرسال
+    } catch(_){
+      await Swal.fire({ icon:'error', title:'تعذّر التحقق', text:'حاول لاحقًا.' });
+      form.dataset.busy = '0';
+      return;
+    }
+
+    // 2) الإرسال الفعلي
+    const btn      = form.querySelector('button[type="submit"]');
+    const spinner  = btn.querySelector('.spinner-border');
+    const sendTxt  = btn.querySelector('.send-text');
+    const alertBox = document.getElementById('globalInviteAlert');
+    const fd       = new FormData(form); // يحوي message/description
+
+    btn.disabled = true; spinner.classList.remove('d-none'); sendTxt.textContent = 'جارٍ الإرسال…';
+
+    try{
+      const res  = await fetch(form.dataset.action, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': `{{ csrf_token() }}` },
+        body: fd
+      });
+      const resp = await res.json();
+
+      alertBox.classList.remove('d-none','alert-success','alert-warning','alert-danger','mt-3');
+      alertBox.classList.add('alert','mt-3', res.ok ? 'alert-success' : (res.status===422 ? 'alert-warning' : 'alert-danger'));
+      alertBox.textContent = resp.message || (res.ok ? 'تم إرسال الدعوة.' : 'تعذّر إرسال الدعوة.');
+
+      if(res.ok){
+        setTimeout(()=>{
+          const m = bootstrap.Modal.getInstance(document.getElementById('globalInviteModal'));
+          m && m.hide();
+        }, 900);
+      }
+    }catch(_){
+      alertBox.classList.remove('d-none','alert-success','alert-warning');
+      alertBox.classList.add('alert','alert-danger','mt-3');
+      alertBox.textContent = 'حدث خطأ غير متوقع.';
+    }finally{
+      btn.disabled = false; spinner.classList.add('d-none'); sendTxt.textContent = `{{ __('invitations.send') }}`;
+      form.dataset.busy = '0';
+    }
+  }, true); // capture لتسبق أي لسنرز قديمة
+})();
 </script>

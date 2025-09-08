@@ -14,7 +14,6 @@ class InvitationController extends Controller
     {
         $user = $request->user();
 
-        // دعوات واردة فقط (حسب السيناريو الجديد ما عندنا صفحات Exchanges)
         $invitations = Invitation::with('sourceUser')
             ->where('destination_user_id', $user->id)
             ->latest()
@@ -25,10 +24,9 @@ class InvitationController extends Controller
         ]);
     }
 
-    // 🔕 تعطيل أي صفحة Exchanges قديمة:
     public function exchanges(Request $request)
     {
-        abort(404); // أو رجّع View فارغ مع تنبيه أنها Disabled حسب الخطة الجديدة
+        abort(404);
     }
 
     public function unreadCount(Request $request)
@@ -55,7 +53,6 @@ class InvitationController extends Controller
         return response()->json(['message' => __('errors.invite_self')], 422);
     }
 
-    // ممنوع لو في محادثة قائمة
     $hasConversation = Conversation::whereHas('users', fn($q) => $q->where('users.id', $user->id))
         ->whereHas('users', fn($q) => $q->where('users.id', $destinationId))
         ->exists();
@@ -63,7 +60,6 @@ class InvitationController extends Controller
         return response()->json(['message' => __('invitations.errors.already_connected')], 422);
     }
 
-    // موجود Pending باتجاهين؟
     $existsPending = Invitation::whereNull('reply')
         ->where(function ($q) use ($user, $destinationId) {
             $q->where(function ($q2) use ($user, $destinationId) {
@@ -78,12 +74,10 @@ class InvitationController extends Controller
         return response()->json(['message' => __('invitations.errors.pending_exists')], 422);
     }
 
-    // بريميوم؟
     $isPremium = method_exists($user, 'hasActiveSubscription')
         ? $user->hasActiveSubscription()
         : (bool) ($user->is_premium ?? false);
 
-    // حد 5/شهر للمجاني
     if (!$isPremium) {
         $sentThisMonth = Invitation::where('source_user_id', $user->id)
             ->where('created_at', '>=', now()->startOfMonth())
@@ -93,7 +87,6 @@ class InvitationController extends Controller
         }
     }
 
-    // رسالة مخصّصة للبريميوم فقط
     $customMessage = $isPremium ? (trim((string)$request->message) ?: null) : null;
 
     try {
@@ -101,16 +94,13 @@ class InvitationController extends Controller
             'source_user_id'      => $user->id,
             'destination_user_id' => $destinationId,
             'date_time'           => now(),
-            'message'             => $customMessage, // null للـ Free
+            'message'             => $customMessage, 
         ]);
 
-        // نص الإشعار للطرف الآخر:
         $systemMessage = __('invitations.free.system_notice', ['name' => $user->fullName()]);
         $textForReceiver = $customMessage ?: $systemMessage;
 
-        // ابعث Notification (اكتب الكلاس تبعك)
-        // Notification::send($invitation->destinationUser, new InvitationCreatedNotification($invitation, $textForReceiver));
-
+ 
         event(new \App\Events\InvitationSent($invitation));
 
         return response()->json(['message' => __('invitations.sent_success')]);
@@ -123,7 +113,7 @@ class InvitationController extends Controller
   public function reply(Request $request, Invitation $invitation)
 {
     $request->validate([
-        'reply' => 'required|in:قبول,رفض', // أو استخدم accepted/declined لو تحب توحّد
+        'reply' => 'required|in:قبول,رفض', 
     ]);
 
     if ($invitation->destination_user_id !== auth()->id()) {
@@ -133,7 +123,6 @@ class InvitationController extends Controller
     if ($request->reply === 'قبول') {
         $invitation->update(['reply' => 'قبول']);
 
-        // أنشئ/اجلب محادثة بين الطرفين
         $sender   = User::findOrFail($invitation->source_user_id);
         $receiver = User::findOrFail($invitation->destination_user_id);
         $convId   = $this->findOrCreateConversation($sender, $receiver);
@@ -141,7 +130,6 @@ class InvitationController extends Controller
         return response()->json(['message' => __('invitations.accepted'), 'conversation_id' => $convId]);
     }
 
-    // رفض => حذف
     $invitation->delete();
     return response()->json(['message' => __('invitations.declined_deleted')]);
 }

@@ -22,7 +22,7 @@
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
 
                             <div class="list-group-item d-flex align-items-start">
-                                <img src="{{ $user->image_url }}" class="rounded-circle me-3" width="50" height="50"
+                                <img src="{{ $user->getImageUrlAttribute() }}" class="rounded-circle me-3" width="50" height="50"
                                     alt="{{ $user->fullName() }}">
 
                                 <div class="flex-grow-1">

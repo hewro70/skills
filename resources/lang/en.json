@@ -17,8 +17,8 @@
   
   "home.hero.bg_alt": "Maharat Hub background",
   "home.hero.badge": "Maharat Hub · Skill Exchange Community",
-  "home.hero.title": "Exchange skills and amplify community impact",
-  "home.hero.subtitle": "Connect with learners and enthusiasts worldwide. Share knowledge for free and learn together.",
+  "home.hero.title": "Share your skills and make a difference",
+  "home.hero.subtitle": " Connect with inspiring people from everywhere, exchange knowledge for free, and learn with others",
   "home.hero.search.aria": "Search skills",
   "home.hero.search.placeholder": "Search for a skill or topic…",
   "home.hero.select.aria": "Skill type",
@@ -34,6 +34,8 @@
   "home.hero.stats.sessions_done": "Sessions completed",
   "home.hero.search.help": "Type a skill name directly or pick from suggestions.",
   "common.search": "Search",
+    "notifications.new_messages": "New message",
+  "notifications.new_invitations": "New Invitation",
 
   "filters.title": "Filters",
   "filters.reset": "Reset",

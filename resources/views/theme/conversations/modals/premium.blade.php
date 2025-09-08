@@ -52,10 +52,7 @@
         </div>
       </div>
 
-      <div class="modal-footer small text-muted justify-content-center">
-        Invitations can be <strong>Accepted</strong> or <strong>Declined</strong>.  
-        Reviews unlock after 12+ valid messages (≥7 chars).
-      </div>
+      
     </div>
   </div>
 </div>

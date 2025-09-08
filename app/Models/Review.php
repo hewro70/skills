@@ -11,12 +11,12 @@ class Review extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ratings',           // tinyInteger 1..5
+        'ratings',          
         'comment',
         'reply',
         'reply_created_at',
         'sender_id',
-        'receved_id',        // (اسم العمود كما في الداتابيس)
+        'receved_id',       
     ];
 
     protected $casts = [
@@ -30,6 +30,6 @@ class Review extends Model
 
     public function receiver()
     {
-        return $this->belongsTo(User::class, 'receved_id'); // مطابق لاسم العمود
+        return $this->belongsTo(User::class, 'receved_id'); 
     }
 }

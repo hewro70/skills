@@ -107,6 +107,27 @@
 
   /* ===== RTL tidy ===== */
   .rtl .form-check{ padding-inline-start:0; }
+  /* خلّي الالتصاق للدسكتوب فقط */
+@media (max-width: 991.98px){
+  .skills-page .sidebar{
+    position: static !important;
+    top: auto !important;
+  }
+  /* تأكد إن البطاقة تاخذ كامل العرض وتجلس طبيعي */
+  .skills-page .sidebar-card{
+    position: relative;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
+
+/* على الدسكتوب خلي الـtop ديناميكي لو عندك هيدر ثابت */
+:root { --header-h: 90px; }
+.skills-page .sidebar{ top: var(--header-h); }
+
+/* لما نعمل سكرول للنتائج، خذ بالحسبان الهيدر الثابت */
+#results-root{ scroll-margin-top: calc(var(--header-h) + 8px); }
+
 </style>
 @endpush
 

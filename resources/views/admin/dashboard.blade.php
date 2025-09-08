@@ -2,120 +2,62 @@
 
 @section('content')
 <div class="container">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-    {{-- Dashboard Cards --}}
-    <div class="row g-4 mb-4">
-        <!-- إجمالي المستخدمين -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-primary shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-people-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">إجمالي المستخدمين</h5>
-                    <h3>{{ $totalUsers }}</h3>
-                </div>
-            </div>
-        </div>
+   {{-- ====== Styles للكاردز (خفيف وسريع) ====== --}}
+<style>
+    .stat-card{ border:0; border-radius:1rem; transition:transform .15s ease, box-shadow .15s ease; }
+    .stat-card:hover{ transform:translateY(-2px); box-shadow:0 .5rem 1rem rgba(0,0,0,.12)!important; }
+    .stat-card .stat-icon{
+        width:54px;height:54px; display:inline-flex; align-items:center; justify-content:center;
+        border-radius:14px; background:rgba(255,255,255,.18);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.25);
+    }
+    .stat-card h3{ font-weight:800; letter-spacing:.3px; margin: .25rem 0 0; }
+    .stat-sub{ opacity:.9; font-size:.9rem; }
+</style>
 
-        <!-- مستخدمين هذا الأسبوع -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-success shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-person-plus-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">مستخدمين هذا الأسبوع</h5>
-                    <h3>{{ $newUsersToday }}</h3>
-                </div>
-            </div>
-        </div>
+{{-- Dashboard Cards (موحّدة) --}}
+@php
+    $cards = [
+        ['title'=>'إجمالي المستخدمين',      'value'=>$totalUsers,              'icon'=>'people-fill',          'bg'=>'primary'],
+        ['title'=>'مستخدمين هذا الأسبوع',     'value'=>$newUsersToday,           'icon'=>'person-plus-fill',     'bg'=>'success'],
+        ['title'=>'عدد الدعوات المرسلة',      'value'=>$sentInvitationsCount,    'icon'=>'envelope-paper-fill',  'bg'=>'warning', 'text'=>'dark'],
+        ['title'=>'عدد الدعوات المقبولة',     'value'=>$acceptedInvitationsCount,'icon'=>'envelope-check-fill',  'bg'=>'info',    'text'=>'dark'],
+        ['title'=>'عدد التبادلات التي بدأت',  'value'=>$startedExchangesCount,   'icon'=>'play-circle-fill',     'bg'=>'success'],
+        ['title'=>'عدد التبادلات التي انتهت', 'value'=>$endExchangesCount,       'icon'=>'stop-circle-fill',     'bg'=>'danger'],
+        ['title'=>'نسبة المحادثات الفعّالة',  'value'=>($activeChatRate.'%'),    'icon'=>'percent',              'bg'=>'info',    'text'=>'dark',
+            'sub'=> $activeChats.' من أصل '.$totalChats.' محادثة'],
+        ['title'=>'عدد المحادثات',           'value'=>$totalChats,              'icon'=>'chat-dots-fill',       'bg'=>'secondary'],
+        ['title'=>'متوسط التقييمات',         'value'=>number_format($averageRating,2).' / 5','icon'=>'star-fill','bg'=>'primary'],
+        ['title'=>'عدد المراجعات المكتوبة',  'value'=>$writtenReviewsCount,     'icon'=>'chat-left-text-fill',  'bg'=>'primary'],
+    ];
+@endphp
 
-        <!-- عدد الدعوات المرسلة -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-primary shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-envelope-paper-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">عدد الدعوات المرسلة</h5>
-                    <h3>{{ $sentInvitationsCount }}</h3>
+<div class="row g-4 mb-4">
+@foreach($cards as $c)
+    @php
+        $bg   = $c['bg'] ?? 'primary';
+        $tcol = $c['text'] ?? 'white';
+    @endphp
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card stat-card text-{{ $tcol }} bg-{{ $bg }} shadow-sm h-100">
+            <div class="card-body text-center d-flex flex-column justify-content-center">
+                <div class="stat-icon mx-auto mb-2">
+                    <i class="bi bi-{{ $c['icon'] }} fs-3"></i>
                 </div>
-            </div>
-        </div>
-
-        <!-- عدد الدعوات المقبولة -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-info shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-envelope-check-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">عدد الدعوات المقبولة</h5>
-                    <h3>{{ $acceptedInvitationsCount }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- عدد التبادلات التي بدأت -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-success shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-play-circle-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">عدد التبادلات التي بدأت</h5>
-                    <h3>{{ $startedExchangesCount }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- عدد التبادلات التي انتهت -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-danger shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-stop-circle-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">عدد التبادلات التي انتهت</h5>
-                    <h3>{{ $endExchangesCount }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- نسبة المحادثات الفعّالة -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-info shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-percent fs-1 mb-2"></i>
-                    <h5 class="card-title">نسبة المحادثات الفعّالة</h5>
-                    <h3>{{ $activeChatRate }}%</h3>
-                    <small>{{ $activeChats }} من أصل {{ $totalChats }} محادثة</small>
-                </div>
-            </div>
-        </div>
-
-        <!-- عدد المحادثات -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-secondary shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-chat-dots-fill fs-1 mb-3"></i>
-                    <h5 class="card-title mb-1">عدد المحادثات</h5>
-                    <h3 class="fw-bold">{{ $totalChats }}</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- متوسط التقييمات -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-info shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-star-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">متوسط التقييمات</h5>
-                    <h3 class="fw-bold">{{ number_format($averageRating, 2) }} / 5</h3>
-                </div>
-            </div>
-        </div>
-
-        <!-- عدد المراجعات المكتوبة -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-white bg-primary shadow-sm h-100">
-                <div class="card-body text-center">
-                    <i class="bi bi-chat-left-text-fill fs-1 mb-2"></i>
-                    <h5 class="card-title">عدد المراجعات المكتوبة</h5>
-                    <h3 class="fw-bold">{{ $writtenReviewsCount }}</h3>
-                </div>
+                <h6 class="mb-1 fw-semibold">{{ $c['title'] }}</h6>
+                <h3 class="fw-bold">{{ $c['value'] }}</h3>
+                @isset($c['sub'])
+                    <div class="stat-sub mt-1">{{ $c['sub'] }}</div>
+                @endisset
             </div>
         </div>
     </div>
+@endforeach
+</div>
+
 
     {{-- Chart Section --}}
     <div class="card mb-4 shadow-sm rounded-4">

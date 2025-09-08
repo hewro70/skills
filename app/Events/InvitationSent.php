@@ -15,7 +15,6 @@ class InvitationSent implements ShouldBroadcastNow
 
     public function __construct(public Invitation $invitation) {}
 
-    // ابث على قناة المستخدم المستلم
     public function broadcastOn(): array
     {
         return [
@@ -23,13 +22,11 @@ class InvitationSent implements ShouldBroadcastNow
         ];
     }
 
-    // اسم الحدث على الفرونت
     public function broadcastAs(): string
     {
         return 'invitation.sent';
     }
 
-    // البيانات اللي توصل للفرونت
     public function broadcastWith(): array
     {
         return [

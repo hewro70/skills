@@ -2,7 +2,6 @@
 
 return [
 
-    // ===== HERO (you already have keys; keeping parity) =====
     'hero' => [
         'badge'    => 'Learn, Teach, and Exchange Skills',
         'title'    => 'Skills Hub',
@@ -109,10 +108,6 @@ return [
             [
                 'q' => 'How do I earn and redeem points?',
                 'a' => 'Earn points through exchanges and activities, redeem them for perks like badges, discounts, and premium access.',
-            ],
-            [
-                'q' => 'What if I want to teach without expecting anything back?',
-                'a' => 'Enable it from your profile and earn 1.5× points for contributing to the community.',
             ],
             [
                 'q' => 'How are skills verified?',

@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable
 {
@@ -25,7 +28,7 @@ class User extends Authenticatable
         'about_me',
         'image_path',
         'is_premium'        => 'bool',
-                'is_mentor',         // 👈 جديد
+                'is_mentor',         
 
     ];
 
@@ -37,13 +40,12 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'date_of_birth' => 'date',
-                'is_mentor'         => 'bool',   // 👈
+                'is_mentor'         => 'bool',  
 
     ];
    public function scopeMentors($q) { return $q->where('is_mentor', true); }
     public function scopeNotMentors($q) { return $q->where('is_mentor', false); }
 
-    // (اختياري) وسم جاهز للنص
     public function getMentorBadgeAttribute(): ?string
     {
         return $this->is_mentor ? __('badges.mentor') : null;
@@ -56,16 +58,13 @@ public function country()
     return $this->belongsTo(\App\Models\Country::class)->withDefault();
 }
 
-/**
- * نص موقع المستخدم (الدولة) بلغة الواجهة
- */public function getLocationTextAttribute(): string
+
+ public function getLocationTextAttribute(): string
 {
-    // لو مافي country_id أصلاً
     if (!$this->country_id) {
         return __('talent.location_unknown');
     }
 
-    // استخدم name_text الجديد مع fallback
     $c = $this->getRelationValue('country') ?? \App\Models\Country::find($this->country_id);
     return $c?->name_text ?: __('talent.location_unknown');
 }
@@ -89,23 +88,51 @@ public function skills()
         return trim("{$this->first_name} {$this->last_name}") ?: '';
     }
 
-    public function getImageUrlAttribute()
-    {
-        if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
-        }
+   
+public function getImageUrlAttribute(): string
+{
+    $path = $this->attributes['image_path']
+          ?? $this->attributes['image_url']
+          ?? $this->attributes['avatar']
+          ?? null;
 
-        return $this->gender === 'female'
-            ? 'https://cdn-icons-png.flaticon.com/512/4140/4140047.png'
-            : 'https://cdn-icons-png.flaticon.com/512/4140/4140048.png';
+    $name     = $this->fullName() ?: ($this->name ?? '') ?: ($this->email ?? 'User');
+    $fallback = 'https://ui-avatars.com/api/?name=' . urlencode($name);
+
+    if ($path) {
+        if (preg_match('#^https?://#i', $path)) {
+            $url = $path;
+        }
+        elseif (Str::startsWith($path, '/')) {
+            $url = URL::to($path);
+        }
+        else {
+            $normalized = Str::startsWith($path, 'public/') ? substr($path, 7) : $path;
+
+            if (Storage::disk('public')->exists($normalized)) {
+                $url = URL::to(Storage::url($normalized));
+            } elseif (file_exists(public_path($path))) {
+                $url = URL::to(asset($path));
+            } else {
+                $url = $fallback;
+            }
+        }
+    } else {
+        $url = $fallback;
     }
+
+    $v   = optional($this->updated_at)->timestamp ?: time();
+    $sep = Str::contains($url, '?') ? '&' : '?';
+    return $url . $sep . 'v=' . $v;
+}
+
+
 
  public function profileCompletionPercentage()
 {
     $totalFields = 0;
     $filledFields = 0;
 
-    // حقول أساسية (أسهل)
     $basicFields = [
         'first_name',
         'last_name',
@@ -120,7 +147,6 @@ public function skills()
         }
     }
 
-    // حقول اختيارية (تزيد النسبة بس مش شرط)
     $optionalFields = [
         'date_of_birth',
         'gender',
@@ -134,13 +160,11 @@ public function skills()
         }
     }
 
-    // Skills (مجرد وجود Skill واحدة يكفي)
     $totalFields++;
     if ($this->skills()->count() > 0) {
         $filledFields++;
     }
 
-    // Languages (مجرد لغة وحدة تكفي)
     $totalFields++;
     if ($this->languages()->count() > 0) {
         $filledFields++;
@@ -149,25 +173,19 @@ public function skills()
     return $totalFields > 0 ? round(($filledFields / $totalFields) * 100) : 0;
 }
 
-    /**
-     * Invitations sent by this user.
-     */
+
       public function hasActiveSubscription(): bool
     {
-        // إن كنت مركّب Cashier:
         if (method_exists($this, 'subscriptions')) {
             if ($this->subscriptions()->active()->exists()) return true;
         }
-        // فلاغ بسيط:
         if ($this->is_premium) return true;
 
-        // (اختياري) تاريخ انتهاء:
-        // if ($this->premium_until && now()->lt($this->premium_until)) return true;
+        
 
         return false;
     }
 
-    // (اختياري) Scopes سريعة
     public function scopePremium($q)   { $q->where('is_premium', true); }
     public function scopeFree($q)      { $q->where('is_premium', false); }
 

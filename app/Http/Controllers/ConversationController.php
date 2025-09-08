@@ -17,18 +17,16 @@ class ConversationController extends Controller
     {
         $userId = Auth::id();
 
-        // 1) المحادثات النشطة
         $conversations = Auth::user()->conversations()
             ->with([
                 'users',
-                'messages' => function ($q) { $q->latest()->limit(1); }, // أو علاقة lastMessage
+                'messages' => function ($q) { $q->latest()->limit(1); }, 
             ])
             ->wherePivot('is_active', true)
             ->orderByDesc('last_message_at')
             ->paginate(10);
 
-        // 2) مرشّحو الدردشة من الدعوات المقبولة (باتجاهين) بدون محادثة قائمة
-        // received: الآخر = source_user_id
+
         $received = DB::table('invitations')
             ->select([
                 'invitations.id as invitation_id',
@@ -38,7 +36,6 @@ class ConversationController extends Controller
             ->where('destination_user_id', $userId)
             ->whereRaw("TRIM(invitations.reply) = 'قبول'");
 
-        // sent: الآخر = destination_user_id
         $sent = DB::table('invitations')
             ->select([
                 'invitations.id as invitation_id',
@@ -97,7 +94,6 @@ class ConversationController extends Controller
         ->where('users.id', '!=', Auth::id())
         ->first();
 
-    // ===== علّق جلب الإكستشينج =====
     /*
     $exchanges = $conversation->exchanges()
         ->with(['sender','receiver','senderSkill:id,name','receiverSkill:id,name'])
@@ -135,7 +131,6 @@ class ConversationController extends Controller
         ]);
     }
 
-    // ===== مرّر بدون exchanges =====
     return view('theme.conversations.show', compact('conversation', 'messages', 'otherUser'));
 }
 
@@ -144,7 +139,6 @@ class ConversationController extends Controller
     {
         $userId = auth()->id();
 
-        // الدعوات التي استلمتها (الطرف الآخر = المرسل)
         $received = auth()->user()->receivedInvitations()
             ->with('sourceUser')
             ->where('reply', 'قبول')
@@ -155,7 +149,6 @@ class ConversationController extends Controller
                 return $inv;
             });
 
-        // الدعوات التي أرسلتها (الطرف الآخر = المستلم)
         $sent = auth()->user()->sentInvitations()
             ->with('destinationUser')
             ->where('reply', 'قبول')
@@ -193,7 +186,6 @@ class ConversationController extends Controller
         $currentUserId  = (int) auth()->id();
         $messageBody    = $request->message;
 
-        // ✅ اعتبر القبول باتجاهين: إما أنت قبلت دعوته أو هو قبل دعوتك
         $invAcceptedEitherWay = DB::table('invitations')
             ->where(function ($q) use ($currentUserId, $targetUserId) {
                 $q->where('source_user_id', $targetUserId)
@@ -212,7 +204,6 @@ class ConversationController extends Controller
 
         DB::beginTransaction();
         try {
-            // ابحث إن كانت محادثة قائمة
             $conversation = Conversation::whereHas('users', function ($q) use ($currentUserId) {
                     $q->where('user_id', $currentUserId);
                 })
@@ -232,7 +223,6 @@ class ConversationController extends Controller
                     $targetUserId  => ['is_active' => true, 'read_at' => null],
                 ]);
             } else {
-                // لو كان أحدهما left سابقاً فعّله
                 $conversation->users()->updateExistingPivot($currentUserId, ['is_active' => true]);
                 $conversation->users()->updateExistingPivot($targetUserId, ['is_active' => true]);
             }

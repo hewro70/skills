@@ -1,71 +1,117 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <!-- Vendor JS Files -->
-<script src="{{ asset('assets') }}/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-<script src="{{ asset('assets') }}/vendor/php-email-form/validate.js"></script>
-<script src="{{ asset('assets') }}/vendor/aos/aos.js"></script>
-<script src="{{ asset('assets') }}/vendor/glightbox/js/glightbox.min.js"></script>
-<script src="{{ asset('assets') }}/vendor/purecounter/purecounter_vanilla.js"></script>
-<script src="{{ asset('assets') }}/vendor/swiper/swiper-bundle.min.js"></script>
+<!-- Vendor (CDN) — مؤقتاً بدل 404 -->
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@srexi/purecounterjs/dist/purecounter_vanilla.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/swiper@9/swiper-bundle.min.js"></script>
 
-<!-- Main JS File -->
-<script src="{{ asset('assets') }}/js/main.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Main JS (لو عندك ملف محلي ويحمّل) -->
+<script defer src="{{ asset('assets/js/main.js') }}"></script>
 
-{{-- Sweet alert --}}
+<!-- SweetAlert -->
+<script defer src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{{-- Sweet alert (مع فحص اكتمال الملف) --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.invitation-form').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault(); // prevent actual form submit
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.invitation-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
 
-                const userName = form.getAttribute('data-username');
-                const formData = new FormData(form);
-                const csrfToken = formData.get('_token');
+      const userName  = form.getAttribute('data-username') || 'هذا المستخدم';
+      const formData  = new FormData(form);            // يحتوي message/description وكل الحقول
+      const csrfToken = formData.get('_token');
 
-                Swal.fire({
-                    title: 'هل أنت متأكد؟',
-                    text: `هل تريد إرسال دعوة إلى ${userName}؟`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'نعم، أرسل الدعوة',
-                    cancelButtonText: 'إلغاء',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        fetch(`{{ route('invitations.send') }}`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': csrfToken
-                                },
-                                body: formData
-                            })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error('حدث خطأ في الإرسال');
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                Swal.fire({
-                                    title: 'تم الإرسال!',
-                                    text: 'تم إرسال الدعوة بنجاح.',
-                                    icon: 'success',
-                                    confirmButtonText: 'حسناً'
-                                });
-                            })
-                            .catch(error => {
-                                Swal.fire({
-                                    title: 'خطأ!',
-                                    text: error.message,
-                                    icon: 'error',
-                                    confirmButtonText: 'حسناً'
-                                });
-                            });
-                    }
-                });
-            });
+      // 1) فحص الأهلية (تسجيل الدخول + اكتمال الملف)
+      try {
+        const res   = await fetch(`{{ route('invitations.check') }}`, {
+          method: 'GET',
+          headers: { 'X-Requested-With':'XMLHttpRequest' },
+          credentials: 'same-origin'
         });
+        const check = await res.json();
+
+        if (check.status === 'unauthenticated') {
+          // زائر: خليه يسجّل/يسجّل دخول
+          Swal.fire({
+            icon: 'warning',
+            title: 'غير مسجّل',
+            html: 'يرجى تسجيل الدخول أو إنشاء حساب لإرسال دعوة.',
+            showCancelButton: true,
+            confirmButtonText: 'تسجيل الدخول',
+            cancelButtonText: 'إنشاء حساب'
+          }).then(r=>{
+            if (r.isConfirmed) {
+              window.location.href = `{{ route('login') }}`;
+            } else {
+              // لو عندك مودال تسجيل للزوّار
+              const m = document.getElementById('registerModal_users');
+              if (m && typeof bootstrap !== 'undefined') new bootstrap.Modal(m).show();
+              else window.location.href = `{{ route('register') }}`;
+            }
+          });
+          return;
+        }
+
+        if (check.status === 'incomplete') {
+          // ملف غير مكتمل
+          Swal.fire({
+            icon: 'info',
+            title: 'الملف الشخصي غير مكتمل',
+            html: `يجب إكمال ملفك الشخصي 100% قبل إرسال الدعوات.<br>
+                   <small>نسبة الاكتمال الحالية: <b>${check.completion_percentage ?? 0}%</b></small><br>
+                   <a href="{{ route('myProfile') }}" class="btn btn-primary mt-2">إكمال الملف الآن</a>`
+          });
+          return;
+        }
+      } catch (err) {
+        // فشل التحقق: أوقف الإرسال بدل التخمين
+        Swal.fire({ icon:'error', title:'تعذّر التحقق', text:'حاول مرة أخرى لاحقًا.' });
+        return;
+      }
+
+      // 2) تأكيد ثم إرسال (نبقي الوصف/الرسالة كما هي ضمن formData)
+      Swal.fire({
+        title: 'هل أنت متأكد؟',
+        html: `هل تريد إرسال دعوة إلى <strong>${userName}</strong>؟`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'نعم، أرسل الدعوة',
+        cancelButtonText: 'إلغاء',
+        reverseButtons: true
+      }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        fetch(`{{ route('invitations.send') }}`, {
+          method: 'POST',
+          headers: { 'X-CSRF-TOKEN': csrfToken },
+          body: formData
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('حدث خطأ في الإرسال');
+          return response.json();
+        })
+        .then(data => {
+          Swal.fire({
+            title: 'تم الإرسال!',
+            text: data.message || 'تم إرسال الدعوة بنجاح.',
+            icon: 'success',
+            confirmButtonText: 'حسناً'
+          });
+        })
+        .catch(error => {
+          Swal.fire({
+            title: 'خطأ!',
+            text: error.message || 'تعذّر إرسال الدعوة.',
+            icon: 'error',
+            confirmButtonText: 'حسناً'
+          });
+        });
+      });
     });
+  });
+});
 </script>
 
 {{-- Invitation Script --}}
@@ -402,6 +448,63 @@
     }
 </script>
 
+<script>
+(function(){
+  const form     = document.getElementById('filterForm');
+  const root     = document.getElementById('results-root');
+  const usersBox = document.getElementById('users-container');
+  const pagBox   = document.getElementById('pagination-links');
+  if (!form || !root || !usersBox || !pagBox) return;
+
+  const HEADERS = { 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' };
+
+  function setLoading(on){ root.classList.toggle('loading', !!on); }
+
+  async function fetchPage(url, pushState){
+    setLoading(true);
+    try{
+      const res = await fetch(url, { headers: HEADERS, credentials: 'same-origin' });
+      const ct  = res.headers.get('Content-Type') || '';
+      // لو رجع HTML (سيشن/خطأ) افتح الصفحة كاملة
+      if (!ct.includes('application/json')) {
+        window.location.href = url.replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
+        return;
+      }
+      const data = await res.json();
+      if (!data?.ok) {
+        window.location.href = url.replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
+        return;
+      }
+      if (data.users_html)      usersBox.innerHTML = data.users_html;
+      if (data.pagination_html) pagBox.innerHTML   = data.pagination_html;
+
+      const clean = (data.url || url).replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
+      pushState ? history.pushState(null,'', clean) : history.replaceState(null,'', clean);
+    } finally { setLoading(false); }
+  }
+
+  // هاندلر الباجينيشن: نقيّده على #pagination-links ونوقّف أي handlers ثانية
+  document.addEventListener('click', function(ev){
+    const a = ev.target.closest('#pagination-links a');
+    if (!a) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (typeof ev.stopImmediatePropagation === 'function') ev.stopImmediatePropagation();
+
+    const u = new URL(a.href, window.location.href);
+    u.searchParams.set('partial','1');
+    fetchPage(u.toString(), true);
+  });
+
+  // دعم زر الرجوع/التقدّم
+  window.addEventListener('popstate', function(){
+    const u = new URL(window.location.href);
+    u.searchParams.set('partial','1');
+    fetchPage(u.toString(), false);
+  });
+})();
+</script>
 
 <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
 <script>

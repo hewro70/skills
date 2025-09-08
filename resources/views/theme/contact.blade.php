@@ -21,13 +21,13 @@
 
         <!-- Info Section -->
         <div class="col-lg-4">
-          <div class="info-item d-flex mb-4" data-aos="fade-up" data-aos-delay="500">
-            <i class="bi bi-building flex-shrink-0 me-3"></i>
-            <div>
-              <h3>{{ __('contact.org_name') }}</h3>
-              <p>{{ __('contact.org_tagline') }}</p>
-            </div>
-          </div>
+          <!--<div class="info-item d-flex mb-4" data-aos="fade-up" data-aos-delay="500">-->
+          <!--  <i class="bi bi-building flex-shrink-0 me-3"></i>-->
+          <!--  <div>-->
+          <!--    <h3>{{ __('contact.org_name') }}</h3>-->
+          <!--    <p>{{ __('contact.org_tagline') }}</p>-->
+          <!--  </div>-->
+          <!--</div>-->
 
           <div class="info-item d-flex mb-4" data-aos="fade-up" data-aos-delay="300">
             <i class="bi bi-envelope flex-shrink-0 me-3"></i>
@@ -37,13 +37,13 @@
             </div>
           </div>
 
-          <div class="info-item d-flex mb-4" data-aos="fade-up" data-aos-delay="400">
-            <i class="bi bi-telephone flex-shrink-0 me-3"></i>
-            <div>
-              <h3>{{ __('contact.phone_title') }}</h3>
-              <p>{{ __('contact.phone_value') }}</p>
-            </div>
-          </div>
+          <!--<div class="info-item d-flex mb-4" data-aos="fade-up" data-aos-delay="400">-->
+          <!--  <i class="bi bi-telephone flex-shrink-0 me-3"></i>-->
+          <!--  <div>-->
+          <!--    <h3>{{ __('contact.phone_title') }}</h3>-->
+          <!--    <p>{{ __('contact.phone_value') }}</p>-->
+          <!--  </div>-->
+          <!--</div>-->
         </div>
 
         <!-- Form Section -->

@@ -130,7 +130,6 @@
 
         <a href="{{ route('conversations.show', $conversation) }}"
            class="list-group-item list-group-item-action d-flex align-items-center conv-item">
-
           <img
             src="{{ $other?->image_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($other->name ?? ($other->full_name ?? 'User')) }}"
             class="avatar-50 me-3"

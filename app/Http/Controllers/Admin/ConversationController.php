@@ -8,14 +8,12 @@ use App\Models\Conversation;
 
 class ConversationController extends Controller
 {
-    // عرض كل المحادثات
     public function index()
     {
         $conversations = Conversation::all();
         return view('admin.conversations.index', compact('conversations'));
     }
 
-    // حذف محادثة
     public function destroy($id)
     {
         $conversation = Conversation::findOrFail($id);

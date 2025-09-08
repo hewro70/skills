@@ -1,18 +1,26 @@
+
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@php
+  // حدّد اللغة من Laravel أو من المتصفح كـ fallback
+  $appLocale = app()->getLocale();
+  $browserIsEn = str_starts_with(strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), 'en');
+  $isEn = ($appLocale === 'en') || ($appLocale !== 'ar' && $browserIsEn);
+@endphp
+<html lang="{{ $isEn ? 'en' : 'ar' }}" dir="{{ $isEn ? 'ltr' : 'rtl' }}">
 
 @include('theme.important-links.partials.head')
 
 <body>
-    <!-- ======= Header ======= -->
-@include('theme.important-links.partials.header', [
-    'title' => 'شروط الاستخدام لمهارات هب',
-    'description' => 'شروط استخدام مهارات هب'
-])
+  {{-- Header --}}
+  @include('theme.important-links.partials.header', [
+      'title' => $isEn ? 'Maharat Hub Privacy Policy' : 'سياسة الخصوصية لمهارات هب',
+      'description' => $isEn ? 'Maharat Hub Privacy Policy' : 'سياسة الخصوصية لمهارات هب'
+  ])
 
-    <!-- ======= Privacy Content ======= -->
-    <main class="privacy-content">
-        <div class="container">
+  {{-- ===== العربية (تظهر إذا اللغة ليست إنجليزية) ===== --}}
+ <main class="privacy-content" id="privacy-ar" @if($isEn) style="display:none" @endif>
+             <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 privacy-container">
                     <div class="highlight-box">
@@ -529,12 +537,223 @@
             </div>
         </div>
     </main>
+  {{-- ===== الإنجليزية (تظهر إذا اللغة إنجليزي) ===== --}}
+  <main class="privacy-content" id="privacy-en" @if(!$isEn) style="display:none" @endif>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 privacy-container">
+          <div class="highlight-box">
+            <p>Welcome to Maharat Hub’s Privacy Policy!</p>
+            <p>This policy is detailed, but we recommend reading it fully to understand exactly how we handle your data at Maharat Hub. Short on time? Here are the key points:</p>
+            <ul>
+              <li>We do not monitor, record, or store the content of your voice calls, video calls, or group conversations on Maharat Hub.</li>
+              <li>We store messages and certain message metadata (like timestamps and chosen topics), but we do not share this data with third parties unless required by law.</li>
+              <li>You can download, edit, or delete your personal data at any time from your profile section.</li>
+              <li>Your data is stored on secured, access-restricted servers. We do our best to keep your data safe and encrypted in transit between your device and our servers.</li>
+              <li>We reserve the right to limit access in cases of misconduct. Keeping the community safe and friendly is our priority.</li>
+            </ul>
+          </div>
 
-    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
-        <i class="bi bi-arrow-up-short"></i>
-    </a>
+          {{-- Table of Contents --}}
+          <div class="toc-container">
+            <h3 class="toc-title">Table of Contents</h3>
+            <ul class="toc-list">
+              <li><a href="#policy-en">Privacy Policy</a></li>
+              <li><a href="#personal-data-en">1. Personal Data</a></li>
+              <li><a href="#data-usage-en">2. Purposes of Use</a></li>
+              <li><a href="#legal-basis-en">3. Legal Bases</a></li>
+              <li><a href="#data-sources-en">4. Data Sources</a></li>
+              <li><a href="#data-transfer-en">5. Transfers outside the EEA</a></li>
+              <li><a href="#data-retention-en">6. Data Retention</a></li>
+              <li><a href="#children-data-en">7. Children’s Data</a></li>
+              <li><a href="#cookies-en">8. Cookies</a></li>
+              <li>
+                <a href="#data-recipients-en">9. Data Recipients</a>
+                <ul class="toc-sublist">
+                  <li><a href="#authentication-en">9.1 Registration & Authentication</a></li>
+                  <li><a href="#hosting-en">9.2 Hosting & Infrastructure</a></li>
+                  <li><a href="#payments-en">9.3 Payments Processing</a></li>
+                  <li><a href="#monitoring-en">9.4 Infrastructure Monitoring</a></li>
+                  <li><a href="#messaging-en">9.5 Contact Management & Messaging</a></li>
+                  <li><a href="#analytics-en">9.6 Web & Mobile Analytics</a></li>
+                  <li><a href="#support-en">9.7 Community Safety & Support</a></li>
+                  <li><a href="#advertising-en">9.8 Advertising</a></li>
+                  <li><a href="#testing-en">9.9 Content Performance & A/B Testing</a></li>
+                </ul>
+              </li>
+              <li><a href="#your-rights-en">10. Your Rights</a></li>
+              <li><a href="#data-requirement-en">11. Data Provision</a></li>
+            </ul>
+          </div>
 
-@include('theme.important-links.partials.scripts')
+          {{-- Main Content (English) --}}
+          <div class="privacy-section" id="policy-en">
+            <h2>Privacy Policy</h2>
+            <p>This document explains how we handle personal data at Maharat Hub across our mobile apps and website. We respect the data our community shares with us and take its protection seriously.</p>
+            <p>Maharat Hub follows best-practice international standards for data protection. We are firmly committed to complying with applicable laws and exceeding them where possible to ensure the safety and privacy of our community.</p>
+            <p>Please take a moment to read these details to understand how we process and protect your information.</p>
+          </div>
+
+          <div class="privacy-section" id="personal-data-en">
+            <h2>1. Personal Data</h2>
+            <p>“Personal data” means any information relating to an identified or identifiable person. We process categories such as:</p>
+            <ul>
+              <li>Your contact details (first name, last name, address, email, approximate location). Your last name is not shared with other members.</li>
+              <li>Profile information (e.g., age, gender, city).</li>
+              <li>Profile photos you upload.</li>
+              <li>Information you share in your messages (images, voice notes, comments, corrections, topics you discuss).</li>
+              <li>Correspondence between you and Maharat Hub.</li>
+              <li>Login records about your visits to our website/apps.</li>
+              <li>Electronic identifiers such as cookies, IP addresses, and ad IDs.</li>
+              <li>Certificates or awards you share (e.g., skill/course certificates).</li>
+              <li>Usage activity (clicks, screens viewed, pages visited).</li>
+            </ul>
+          </div>
+
+          <div class="privacy-section" id="data-usage-en">
+            <h2>2. Purposes of Use</h2>
+            <p>We collect personal data only as you provide it and for the purposes you request (e.g., creating an account). We use and store your data to:</p>
+            <ul>
+              <li>Create your public member profile.</li>
+              <li>Provide a members-only skills-exchange community and prevent abuse (e.g., validating profile photos to boost safety and detect fake accounts).</li>
+              <li>Send service-related updates (membership status, missed calls/messages, email/push alerts).</li>
+              <li>Show in-app advertising (you can disable this in settings).</li>
+              <li>Help you find nearby learning/exchange partners.</li>
+              <li>Understand usage and improve the service.</li>
+              <li>Keep conversations/events/clubs friendly and accountable by encouraging authentic communication.</li>
+              <li>Contact you and manage our relationship.</li>
+              <li>Perform our contracts with you.</li>
+              <li>Run marketing like newsletters (where permitted).</li>
+              <li>Ensure quality and perform statistics.</li>
+              <li>Run contests, events, and surveys.</li>
+              <li>Review membership applications and moderate the community.</li>
+              <li>Improve our services overall.</li>
+            </ul>
+            <p>We only share your data with third parties with your explicit consent or when legally required (e.g., by court order or competent authority).</p>
+          </div>
+
+          <div class="privacy-section" id="legal-basis-en">
+            <h2>3. Legal Bases</h2>
+            <p>We process your data under the following legal bases:</p>
+            <ul>
+              <li>GDPR Art. 6(1)(a) — where you consent (e.g., cookies or ads, where applicable).</li>
+              <li>GDPR Art. 6(1)(b) — to perform a contract with you (e.g., joining the community).</li>
+              <li>GDPR Art. 6(1)(c) — to comply with legal obligations.</li>
+              <li>GDPR Art. 6(1)(f) — our legitimate interests (e.g., processing chats in exchanges/events/clubs, keeping the community safe, statistics).</li>
+            </ul>
+          </div>
+
+          <div class="privacy-section" id="data-sources-en">
+            <h2>4. Data Sources</h2>
+            <p>Unless stated otherwise, we collect data directly from you, including via your devices when accessing our services.</p>
+          </div>
+
+          <div class="privacy-section" id="data-transfer-en">
+            <h2>5. Transfers outside the EEA</h2>
+            <p>We may transfer your personal data to countries outside the EEA only where adequate protection exists (e.g., EU adequacy decisions) or appropriate safeguards (e.g., SCCs, certifications) are in place.</p>
+          </div>
+
+          <div class="privacy-section" id="data-retention-en">
+            <h2>6. Data Retention</h2>
+            <ul>
+              <li>Consent-based processing: until you withdraw consent (e.g., delete your account).</li>
+              <li>Contractual processing: until the relationship ends or applicable retention periods expire.</li>
+              <li>Legitimate-interest processing: until your overriding interests require deletion or anonymization.</li>
+            </ul>
+            <p>If you delete your account, we delete your personal data. Messages you sent to other members may remain with them.</p>
+          </div>
+
+          <div class="privacy-section" id="children-data-en">
+            <h2>7. Children’s Data</h2>
+            <p>Our service is not for children under 16. In the EEA, you must be above your country’s legal age of consent for data processing or have verifiable parental consent.</p>
+          </div>
+
+          <div class="privacy-section" id="cookies-en">
+            <h2>8. Cookies</h2>
+            <p>We use cookies and similar technologies to remember your preferences, keep you signed in, personalize content, measure effectiveness, diagnose issues, and keep the community safe. You can change/withdraw consent at any time via the cookie settings at the bottom of this page.</p>
+          </div>
+
+          <div class="privacy-section" id="data-recipients-en">
+            <h2>9. Data Recipients</h2>
+            <p>We use your data internally and share it only with service providers involved in delivering our platform (e.g., analytics, messaging, hosting, payments) under appropriate safeguards.</p>
+
+            <h3 id="authentication-en">9.1 Registration & Authentication</h3>
+            <p>Third-party auth providers may process your data per their policies (e.g., Google OAuth, Firebase Auth, Apple Sign In, etc.).</p>
+
+            <h3 id="hosting-en">9.2 Hosting & Infrastructure</h3>
+            <p>We rely on reputable cloud providers (e.g., AWS, Google Cloud, Azure/CDN) to host data securely with access controls.</p>
+
+            <h3 id="payments-en">9.3 Payments Processing</h3>
+            <p>For in-app purchases, app stores process payment data under their privacy policies (e.g., Apple App Store, Google Play).</p>
+
+            <h3 id="monitoring-en">9.4 Infrastructure Monitoring</h3>
+            <p>Crash and performance tools help improve stability and quality (e.g., Crashlytics, Firebase Performance).</p>
+
+            <h3 id="messaging-en">9.5 Contact Management & Messaging</h3>
+            <p>Push/email providers help us deliver notifications and manage contact lists (e.g., FCM, SparkPost, Iterable, Agora).</p>
+
+            <h3 id="analytics-en">9.6 Web & Mobile Analytics</h3>
+            <p>We use analytics to understand usage and improve (e.g., internal analytics, Google Analytics, Firebase Analytics, Adjust, etc.).</p>
+
+            <h3 id="support-en">9.7 Community Safety & Support</h3>
+            <p>Support and research platforms help handle tickets and feedback (e.g., Zendesk, Typeform, FeatureOS).</p>
+
+            <h3 id="advertising-en">9.8 Advertising</h3>
+            <p>Some ad services may use cookies/IDs for personalization/retargeting (e.g., AdMob, AppLovin, Meta Audience Network). You can opt out where provided.</p>
+
+            <h3 id="testing-en">9.9 Content Performance & A/B Testing</h3>
+            <p>We may run A/B tests and remote configuration (e.g., Firebase Remote Config, Google Optimize) to improve UX.</p>
+          </div>
+
+          <div class="privacy-section" id="your-rights-en">
+            <h2>10. Your Rights</h2>
+            <ul>
+              <li>Access, rectification, erasure, restriction, objection, and portability (where applicable).</li>
+              <li>Withdraw consent at any time (effective going forward).</li>
+              <li>Contact our Data Protection contact for questions/complaints.</li>
+              <li>Lodge a complaint with your competent supervisory authority.</li>
+            </ul>
+          </div>
+
+          <div class="privacy-section" id="data-requirement-en">
+            <h2>11. Data Provision</h2>
+            <p>Providing data is generally optional unless indicated otherwise when collected.</p>
+          </div>
+
+          <div class="text-center">
+            <a href="{{ route('theme.index') }}" class="back-button">
+              Back to Home
+              <i class="bi bi-arrow-left"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {{-- زر الرجوع للأعلى --}}
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  @include('theme.important-links.partials.scripts')
+
+  {{-- تبديل تلقائي بحسب لغة المتصفح إذا ما في ضبط Laravel --}}
+  <script>
+    (function(){
+      var html = document.documentElement;
+      var hasLaravelLocale = "{{ $appLocale }}" && "{{ $appLocale }}".length > 0;
+      if (hasLaravelLocale) return; // Laravel يحسم القرار
+
+      var isEn = (navigator.language || navigator.userLanguage || 'ar').toLowerCase().startsWith('en');
+      document.getElementById('privacy-ar').style.display = isEn ? 'none' : '';
+      document.getElementById('privacy-en').style.display = isEn ? '' : 'none';
+      html.setAttribute('lang', isEn ? 'en' : 'ar');
+      html.setAttribute('dir', isEn ? 'ltr' : 'rtl');
+    })();
+  </script>
+
+  {{-- ملاحظة: لو بدك تعرض اللغتين دائمًا مع بعض، اشطب display:none من الـ mainين فوق --}}
 </body>
-
 </html>
+

@@ -2,15 +2,75 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Laravel</title>
+  @php
+    $TITLE = 'Maharat Hub';
+    $DESC  = 'Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.';
+  @endphp
+
+  <title>{{ $TITLE }}</title>
+  <meta name="description" content="{{ $DESC }}">
+  <meta name="keywords" content="Maharat Hub, skill exchange, share knowledge, online learning, free learning, community learning">
+
+  {{-- Canonical --}}
+  <link rel="canonical" href="{{ url()->current() }}">
+
+  {{-- Favicons (تمام) --}}
+  <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+  <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('favicon-192x192.png') }}">
+  <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
+  {{-- Open Graph --}}
+  <meta property="og:title" content="{{ $TITLE }}">
+  <meta property="og:description" content="{{ $DESC }}">
+  <meta property="og:image" content="{{ url(asset('img/logo.png')) }}">
+  <meta property="og:url" content="{{ url('/') }}">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US"> {{-- بدك عربي؟ ممكن تضيف ar_JO كمان --}}
+
+  {{-- ✅ Schema.org (لازم داخل <script type="application/ld+json">) --}}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "url": "{{ url('/') }}",
+    "logo": "{{ url(asset('img/logo.png')) }}",
+    "name": "Maharat Hub",
+    "alternateName": "مهارات هب",
+    "description": "منصة لتبادل المهارات والمعرفة عالميًا. تواصل مع أشخاص لتتعلم وتشارك خبراتك مجانًا.",
+    "sameAs": [
+      "https://www.facebook.com/maharathub",
+      "https://www.instagram.com/maharathub",
+      "https://www.linkedin.com/company/maharathub"
+    ]
+  }
+  </script>
+
+  {{-- (اختياري) سكيمة WebSite + SearchAction لو عندك بحث داخلي --}}
+  {{-- 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "{{ url('/') }}",
+    "name": "Maharat Hub",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "{{ url('/') }}?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  --}}
+
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,600&display=swap" rel="stylesheet" />
-    {{-- <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png"> --}}
+
 
     <!-- Styles -->
     <style>

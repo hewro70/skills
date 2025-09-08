@@ -1,9 +1,35 @@
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>مهارات هب</title>
-    <meta name="description" content="">
-    <meta name="keywords" content="">
+@php
+  $TITLE = 'Maharat Hub';
+  $DESC  = 'Connect with people globally to share knowledge, learn new skills, and exchange expertise for free.';
+@endphp
+
+<title>{{ $TITLE }}</title>
+<meta name="description" content="{{ $DESC }}">
+<meta name="keywords" content="Maharat Hub, skill exchange, share knowledge, online learning, free learning, community learning">
+
+<link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+<link rel="icon" type="image/png" sizes="192x192" href="{{ asset('favicon-192x192.png') }}">
+<link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+
+<!-- Open Graph -->
+<meta property="og:title" content="{{ $TITLE }}">
+<meta property="og:description" content="{{ $DESC }}">
+<meta property="og:image" content="{{ asset('img/logo.png') }}">
+<meta property="og:url" content="{{ url('/') }}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="en_US">
+
+<!-- Robots (يسمح بأطول سنِّبت ممكن) -->
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+
+
+
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <link
@@ -12,6 +38,7 @@
     <link
         href="https://d1csarkz8obe9u.cloudfront.net/posterpreviews/skill-logo-design-template-6677debd608907e81c75e20c66e95baf_screen.jpg?ts=1685817469"
         rel="apple-touch-icon">
+<link rel="icon" type="image/png" href="{{ asset('img/logo.png') }}">
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com" rel="preconnect">

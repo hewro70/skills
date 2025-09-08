@@ -1,18 +1,25 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+@php
+  $appLocale = app()->getLocale();
+  $browserIsEn = str_starts_with(strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? ''), 'en');
+  $isEn = ($appLocale === 'en') || ($appLocale !== 'ar' && $browserIsEn);
+@endphp
+<html lang="{{ $isEn ? 'en' : 'ar' }}" dir="{{ $isEn ? 'ltr' : 'rtl' }}">
 
 @include('theme.important-links.partials.head')
 
 <body>
-    <!-- ======= Header ======= -->
-    @include(
-        'theme.important-links.partials.header',
-        ['title' => 'شروط الاستخدام لمهارات هب'],
-        ['description' => 'شروط استخدام مهارات هب']
-    )
+  {{-- Header --}}
+  @include('theme.important-links.partials.header', [
+      'title' => $isEn ? 'Maharat Hub Terms of Use' : 'شروط الاستخدام لمهارات هب',
+      'description' => $isEn ? 'Terms of Use for Maharat Hub' : 'شروط استخدام مهارات هب'
+  ])
+
+
+
 
     <!-- ======= Terms Content ======= -->
-    <main class="terms-content">
+  <main class="terms-content" id="terms-ar" @if($isEn) style="display:none" @endif>
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-10 terms-container">
@@ -575,11 +582,219 @@
         </div>
     </main>
 
-    <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
-        <i class="bi bi-arrow-up-short"></i>
-    </a>
-    
-    @include('theme.important-links.partials.scripts')
-</body>
 
+
+
+
+  {{-- ===================== English ===================== --}}
+  <main class="terms-content" id="terms-en" @if(!$isEn) style="display:none" @endif>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 terms-container">
+          <div class="highlight-box">
+            <p>Welcome to Maharat Hub’s Terms of Use!</p>
+            <p>This document governs your relationship with Maharat Hub when you use our platform and services. Please read it carefully before using the service.</p>
+            <p>Key points:</p>
+            <ul>
+              <li>Maharat Hub is a community for skills exchange between members.</li>
+              <li>We have zero tolerance for abusive behavior.</li>
+              <li>You are responsible for the content you share on the platform.</li>
+              <li>We may suspend or ban violating accounts.</li>
+              <li>You must be at least 16 years old to use the service.</li>
+            </ul>
+          </div>
+
+          {{-- Table of Contents --}}
+          <div class="toc-container">
+            <h3 class="toc-title">Table of Contents</h3>
+            <ul class="toc-list">
+              <li><a href="#introduction-en">Introduction</a></li>
+              <li><a href="#basic-points-en">Core Points</a></li>
+              <li><a href="#service-terms-en">Service Terms</a></li>
+              <li><a href="#registration-en">Registration & Agreement</a></li>
+              <li><a href="#paid-service-en">Paid Service</a></li>
+              <li><a href="#ownership-en">Ownership & License</a></li>
+              <li><a href="#eligibility-en">Eligibility & Account Security</a></li>
+              <li><a href="#community-guidelines-en">Community Guidelines</a></li>
+              <li><a href="#content-en">Content & Conversations</a></li>
+              <li><a href="#service-quality-en">Service Quality</a></li>
+              <li><a href="#modifications-en">Changes & Improvements</a></li>
+              <li><a href="#social-media-en">Social Media & Networks</a></li>
+              <li><a href="#rights-en">Maharat Hub’s Rights</a></li>
+              <li><a href="#notifications-en">Notices & Service Messages</a></li>
+              <li><a href="#feedback-en">Feedback & Suggestions</a></li>
+              <li><a href="#removal-en">Notice & Removal</a></li>
+              <li><a href="#trademarks-en">Trademarks</a></li>
+              <li><a href="#termination-en">Termination & Account Deletion</a></li>
+              <li><a href="#withdrawal-en">Right of Withdrawal</a></li>
+              <li><a href="#warranties-en">Warranties</a></li>
+              <li><a href="#liability-en">Limitation of Liability</a></li>
+              <li><a href="#miscellaneous-en">Miscellaneous</a></li>
+            </ul>
+          </div>
+
+          {{-- ===== Sections (English) ===== --}}
+          <div class="terms-section" id="introduction-en">
+            <h2>Introduction</h2>
+            <p>Maharat Hub connects people who want to learn and teach skills through mutual exchange. By using the app, you agree to these Terms (“Terms”).</p>
+          </div>
+
+          <div class="terms-section" id="basic-points-en">
+            <h2>Core Points</h2>
+            <ul>
+              <li>Maharat Hub is a community focused on skill exchange and mutual learning.</li>
+              <li>Members must follow our community standards. We do not tolerate bullying, spam, harassment, discrimination, or obscene/inappropriate content.</li>
+              <li>We do not continuously monitor conversations. If we are notified of inappropriate content, we may remove it or restrict access.</li>
+              <li>We may suspend accounts and remove violating content.</li>
+            </ul>
+          </div>
+
+          <div class="terms-section" id="service-terms-en">
+            <h2>Service Terms</h2>
+            <p>By registering for and using our websites, services, mobile apps, developer platform, and any information provided as part of the service (“Service”), you enter into a legally binding agreement with Maharat Hub, subject to the detailed conditions below.</p>
+            <p>Your access and use of the Service requires acceptance of and compliance with these Terms, including the community rules.</p>
+            <p>We may update these Terms. Continued use after changes means you accept the updated Terms. The contract language is Arabic.</p>
+            <p>Your privacy matters. Any information you provide is processed under our Privacy Policy.</p>
+          </div>
+
+          <div class="terms-section" id="registration-en">
+            <h2>Registration & Agreement</h2>
+            <p>Create a user account (e.g., via Google or email). When signing up with Google, you authorize us to access certain account info. You accept these Terms and provide required personal information.</p>
+            <p>After submitting the form, you’ll receive a verification email. Keep your account credentials secure. One account per person; no transfers to third parties.</p>
+            <p>We individually review registrations to keep the community safe; queues may occur. You become a full member only after acceptance.</p>
+          </div>
+
+          <div class="terms-section" id="paid-service-en">
+            <h2>Paid Service</h2>
+            <p>Some features require fees. Subscriptions can be monthly/quarterly/annual, auto-renew unless canceled. App-store purchases follow the respective store’s policies. Trials may auto-convert unless canceled.</p>
+          </div>
+
+          <div class="terms-section" id="ownership-en">
+            <h2>Ownership & License</h2>
+            <p>You own the information you provide and may request deletion, except where shared/copied by others. You grant Maharat Hub a non-exclusive, irrevocable, worldwide, transferable, sublicensable, royalty-free license to use and process content you provide for operating and improving the Service, as detailed in the Arabic version.</p>
+            <p>Personal data is governed by the Privacy Policy.</p>
+          </div>
+
+          <div class="terms-section" id="eligibility-en">
+            <h2>Eligibility & Account Security</h2>
+            <ul>
+              <li>Must be 16+ and not currently banned.</li>
+              <li>Use your real identity and a clear profile photo.</li>
+              <li>Keep your password secure; you’re responsible for activity on your account.</li>
+              <li>Maintain one account only.</li>
+            </ul>
+          </div>
+
+          <div class="terms-section" id="community-guidelines-en">
+            <h2>Community Guidelines</h2>
+            <p>Keep the platform safe and respectful. Don’t promote commercial services, post illegal/obscene/abusive content, encourage violence or discrimination, request credentials, spam, or upload malware. Don’t attempt to harm or disrupt the Service.</p>
+          </div>
+
+          <div class="terms-section" id="content-en">
+            <h2>Content & Conversations</h2>
+            <p>Users are responsible for their content, whether public or private. We may remove content or terminate accounts that violate these Terms. We don’t endorse user content and aren’t liable for losses resulting from it.</p>
+          </div>
+
+          <div class="terms-section" id="service-quality-en">
+            <h2>Service Quality</h2>
+            <p>We strive for high quality but don’t guarantee uninterrupted, error-free service. We aren’t liable for outages or delays caused by failures in any part of our Services.</p>
+          </div>
+
+          <div class="terms-section" id="modifications-en">
+            <h2>Changes & Improvements</h2>
+            <p>We continually improve our Services and may add/remove features or discontinue parts of the Service for legitimate reasons (e.g., security, legal compliance). We notify you in advance when materially adverse changes occur where feasible.</p>
+          </div>
+
+          <div class="terms-section" id="social-media-en">
+            <h2>Social Media & Networks</h2>
+            <p>You may link third-party social accounts (e.g., Facebook, Google, X). If a platform disables access, imported content may no longer be available.</p>
+          </div>
+
+          <div class="terms-section" id="rights-en">
+            <h2>Maharat Hub’s Rights</h2>
+            <p>All rights, title, and interest in the Services (excluding user content) belong to Maharat Hub and its licensors. No rights to our trademarks, logos, or trade dress are granted without written permission.</p>
+          </div>
+
+          <div class="terms-section" id="notifications-en">
+            <h2>Notices & Service Messages</h2>
+            <p>We may contact you via in-app messages, email, push, or SMS for contractual purposes. Keep your contact info up to date.</p>
+          </div>
+
+          <div class="terms-section" id="feedback-en">
+            <h2>Feedback & Suggestions</h2>
+            <p>By submitting feedback, you grant us the right to use it without obligation or compensation, as outlined in the Arabic version.</p>
+          </div>
+
+          <div class="terms-section" id="removal-en">
+            <h2>Notice & Removal</h2>
+            <p>We may remove user content that is inappropriate or infringes rights. We are not obligated to republish removed content.</p>
+          </div>
+
+          <div class="terms-section" id="trademarks-en">
+            <h2>Trademarks</h2>
+            <p>“Maharat Hub,” our logo, and other marks are our property or that of our licensors. Don’t use them without prior written consent.</p>
+          </div>
+
+          <div class="terms-section" id="termination-en">
+            <h2>Termination & Account Deletion</h2>
+            <p>Contracts continue until terminated under these Terms. We may suspend or terminate access at our discretion for violations or other reasons. You may delete your account at any time.</p>
+          </div>
+
+          <div class="terms-section" id="withdrawal-en">
+            <h2>Right of Withdrawal</h2>
+            <p>Consumers may withdraw within 14 days. Details and effects of withdrawal follow the rules reflected in the Arabic version (e.g., refunds and payment method).</p>
+          </div>
+
+          <div class="terms-section" id="warranties-en">
+            <h2>Warranties</h2>
+            <p>The Service is provided “as is” and “as available.” No warranties are given beyond those required by law. EEA consumers may have statutory guarantees under applicable law.</p>
+          </div>
+
+          <div class="terms-section" id="liability-en">
+            <h2>Limitation of Liability</h2>
+            <p>Maharat Hub is liable only for intent and gross negligence, and for typical foreseeable damages in cases described in the Arabic version. Statutory rights remain unaffected (e.g., product liability, life/health).</p>
+          </div>
+
+          <div class="terms-section" id="miscellaneous-en">
+            <h2>Miscellaneous</h2>
+            <p>Failure to enforce a right is not a waiver. If a provision is invalid, it will be modified to be enforceable while preserving intent. These Terms are the entire agreement regarding the Services (unless another agreement applies). Governing law and venue are as stated in the Arabic version.</p>
+            <p>EU ODR platform: http://ec.europa.eu/consumers/odr/</p>
+            <p>Contact: https://www.maharathub.com/pages/contact-us</p>
+          </div>
+
+          <div class="text-center mt-4">
+            <a href="{{ route('theme.index') }}" class="back-button">
+              Back to Home
+              <i class="bi bi-arrow-left"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {{-- Scroll to top --}}
+  <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
+    <i class="bi bi-arrow-up-short"></i>
+  </a>
+
+  @include('theme.important-links.partials.scripts')
+
+  {{-- Fallback لاختيار اللغة من المتصفح إذا Laravel ما حدّد اللغة --}}
+  <script>
+    (function(){
+      var html = document.documentElement;
+      var hasLaravelLocale = "{{ $appLocale }}" && "{{ $appLocale }}".length > 0;
+      if (hasLaravelLocale) return;
+      var isEn = (navigator.language || navigator.userLanguage || 'ar').toLowerCase().startsWith('en');
+      document.getElementById('terms-ar').style.display = isEn ? 'none' : '';
+      document.getElementById('terms-en').style.display = isEn ? '' : 'none';
+      html.setAttribute('lang', isEn ? 'en' : 'ar');
+      html.setAttribute('dir', isEn ? 'ltr' : 'rtl');
+    })();
+  </script>
+
+  {{-- ملاحظة: لو بدك تعرض اللغتين دائمًا، اشطب خاصية display:none من المينين --}}
+</body>
 </html>
+

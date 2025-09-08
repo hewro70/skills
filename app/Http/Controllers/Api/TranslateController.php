@@ -35,19 +35,17 @@ class TranslateController extends Controller
             ];
             if ($apiKey) $payload['api_key'] = $apiKey;
 
-            // كاش لنتيجة هذا النص (24 ساعة)
             $cacheKey = 'tr:'.$target.':'.sha1($item['text']);
 
             $translated = Cache::remember($cacheKey, 86400, function() use ($url, $payload) {
                 try {
-                    // Retry خفيف لو صار 429/أخطاء شبكة
                     $res = Http::asForm()
                         ->timeout(10)
-                        ->retry(2, 500) // مرتين، كل مرة 500ms
+                        ->retry(2, 500) 
                         ->post($url, $payload);
 
                     if ($res->failed()) {
-                        return null; // خليه يرجع للأصل لاحقاً
+                        return null; 
                     }
 
                     $json = $res->json();
@@ -57,7 +55,7 @@ class TranslateController extends Controller
                 }
             });
 
-            $out[$item['id']] = $translated ?? $item['text']; // fallback للأصل عند الفشل
+            $out[$item['id']] = $translated ?? $item['text'];
         }
 
         return response()->json(['data' => $out]);

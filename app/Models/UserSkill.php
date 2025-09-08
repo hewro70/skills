@@ -11,7 +11,6 @@ class UserSkill extends Pivot
     protected $table = 'user_skills';
     protected $fillable = ['user_id', 'skill_id', 'level', 'description'];
 
-    // (اختياري) Default casts
     protected $casts = [
         'level' => 'integer',
     ];

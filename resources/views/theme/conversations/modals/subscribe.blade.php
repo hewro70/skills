@@ -2,38 +2,43 @@
 @php
   $modalId = $modalId ?? 'subscribeModal';
   $formId  = $formId  ?? 'subscribeForm';
+
+  // Client-required payment config (can be overridden via $config)
   $config  = array_merge([
-    'price'        => '4.99 USD',
-    'wallet_email' => 'wallet@example.com',
-    'wallet_name'  => 'Premium Wallet',
-    'paypal'       => 'payments@yourapp.com',
+    'price_local' => '3.5 JOD',                         // Inside Jordan
+    'price_intl'  => '4.99 USD',                        // Outside Jordan
+    'cliq_alias'  => 'ZALASKER',                        // CliQ alias
+    'paypal_link' => 'https://paypal.me/MaharatHub',    // PayPal link
   ], $config ?? []);
+
   $prefill = array_merge([
     'email'        => auth()->user()->email ?? '',
     'account_name' => auth()->user()->name ?? 'your_account',
   ], $prefill ?? []);
 @endphp
+
 @push('styles')
 <style>
-  /* خلّي جسم المودال يلف فقط إذا اضطر */
+  /* Keep modal body scroll only if needed */
   #{{ $modalId }} .modal-body{
-    max-height: calc(100dvh - 170px); /* يراعي الهيدر والفوتر */
+    max-height: calc(100dvh - 170px);
     overflow: auto;
   }
-  /* قلل الهوامش العمودية شوي */
+  /* Tighten vertical rhythm a bit */
   #{{ $modalId }} .border.rounded-4.p-3{ padding: .9rem !important; }
   #{{ $modalId }} .mb-3{ margin-bottom: .75rem !important; }
-  /* على الشاشات الصغيرة خليها عمود واحد لتخفيف الطول */
+
+  /* On small screens, reduce gaps */
   @media (max-width: 992px){
     #{{ $modalId }} .row.g-4{ row-gap: .75rem !important; }
   }
-  /* إذا كان ارتفاع الشاشة قليل، خفّف المسافات */
+  /* If viewport height is small, compact header/footer */
   @media (max-height: 700px){
     #{{ $modalId }} .modal-header, #{{ $modalId }} .modal-footer{ padding: .5rem .75rem; }
     #{{ $modalId }} .modal-title{ font-size: 1rem; }
   }
 
-  /* تحسين بصري خفيف */
+  /* Light side background */
   .subscribe-side{ background:#fbfbfd; }
 </style>
 @endpush
@@ -45,10 +50,10 @@
 
       <div class="modal-header">
         <div>
-          <h5 class="modal-title">{{ __('modals.subscribe.title') }}</h5>
-          <div class="text-muted small">{{ __('modals.subscribe.subtitle', [], null) ?: 'Choose your payment region then submit the transfer details.' }}</div>
+          <h5 class="modal-title">Upgrade to Premium</h5>
+          <div class="text-muted small">Select your region, then submit your transfer details.</div>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('common.close') }}"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
 
       <div class="modal-body">
@@ -57,42 +62,36 @@
           <div class="col-md-5">
             <div class="border rounded-4 p-3 h-100 subscribe-side">
               <div class="alert alert-secondary small mb-3">
-                {!! __('modals.subscribe.note_html') !!}
+                Please complete the payment, then fill the form. Use the note format: <code>premium - {{ $prefill['account_name'] }}</code>
               </div>
 
               <div class="mb-2">
-                <label class="form-label fw-semibold">{{ __('modals.subscribe.where') }}</label>
+                <label class="form-label fw-semibold">Your location</label>
                 <div class="d-flex flex-wrap gap-3">
                   <label class="form-check m-0">
                     <input class="form-check-input" type="radio" name="where" value="jordan" required>
-                    <span class="form-check-label">{{ __('modals.subscribe.where.jordan') }}</span>
+                    <span class="form-check-label">Inside Jordan</span>
                   </label>
                   <label class="form-check m-0">
                     <input class="form-check-input" type="radio" name="where" value="intl" required>
-                    <span class="form-check-label">{{ __('modals.subscribe.where.intl') }}</span>
+                    <span class="form-check-label">Outside Jordan</span>
                   </label>
                 </div>
               </div>
 
               <div id="receivingJordan" class="border rounded p-3 mb-3 d-none">
-                <div class="small mb-2 fw-semibold">{{ __('modals.subscribe.rec.jordan.title') }}</div>
-                <div class="small">{{ __('modals.subscribe.rec.jordan.wallet_email') }}: <b>{{ $config['wallet_email'] }}</b></div>
-                <div class="small">{{ __('modals.subscribe.rec.jordan.wallet_name') }}: <b>{{ $config['wallet_name'] }}</b></div>
-                <div class="small">{{ __('modals.subscribe.rec.note_label') }}: <code>premium - {{ $prefill['account_name'] }}</code></div>
-                <div class="small">{{ __('modals.subscribe.rec.amount') }}: <b>{{ $config['price'] }}</b></div>
+                <div class="small mb-2 fw-semibold">Receiving details (Jordan / CliQ)</div>
+                <div class="small">CliQ Alias: <b>{{ $config['cliq_alias'] }}</b></div>
+                <div class="small">Amount: <b>{{ $config['price_local'] }}</b></div>
+                <div class="small">Transfer note: <code>premium - {{ $prefill['account_name'] }}</code></div>
               </div>
 
               <div id="receivingIntl" class="border rounded p-3 mb-3 d-none">
-                <div class="small mb-2 fw-semibold">{{ __('modals.subscribe.rec.intl.title') }}</div>
-                <div class="small">PayPal: <b>{{ $config['paypal'] }}</b></div>
-                <div class="small">{{ __('modals.subscribe.rec.note_label') }}: <code>premium - {{ $prefill['account_name'] }}</code></div>
-                <div class="small">{{ __('modals.subscribe.rec.amount') }}: <b>{{ $config['price'] }}</b></div>
+                <div class="small mb-2 fw-semibold">Receiving details (Outside Jordan / PayPal)</div>
+                <div class="small">PayPal: <a href="{{ $config['paypal_link'] }}" target="_blank" rel="noopener" class="text-decoration-underline">{{ $config['paypal_link'] }}</a></div>
+                <div class="small">Amount: <b>{{ $config['price_intl'] }}</b></div>
+                <div class="small">Transfer note: <code>premium - {{ $prefill['account_name'] }}</code></div>
               </div>
-
-              {{--  <div class="small text-muted">
-                <i class="bi bi-shield-check me-1"></i>
-                {{ __('modals.subscribe.safe_note', [], null) ?: 'We review and activate within 24h.' }}
-              </div>  --}}
             </div>
           </div>
 
@@ -100,33 +99,33 @@
           <div class="col-md-7">
             <div class="border rounded-4 p-3 h-100" style="padding:.9rem!important">
               <div id="fieldWallet" class="mb-3 d-none">
-                <label class="form-label">{{ __('modals.subscribe.form.wallet_name') }}</label>
-                <input type="text" class="form-control form-control-sm" name="sender_wallet_name" placeholder="{{ __('modals.subscribe.form.wallet_name') }}">
+                <label class="form-label">Your CliQ name (sender)</label>
+                <input type="text" class="form-control form-control-sm" name="sender_wallet_name" placeholder="Your name on CliQ">
               </div>
 
               <div id="fieldPaypal" class="mb-3 d-none">
-                <label class="form-label">{{ __('modals.subscribe.form.paypal_email') }}</label>
+                <label class="form-label">Your PayPal email (sender)</label>
                 <input type="email" class="form-control form-control-sm" name="sender_paypal_email" placeholder="example@domain.com">
               </div>
 
               <div class="mb-3">
-                <label class="form-label">{{ __('modals.subscribe.form.site_account_name') }}</label>
-                <input type="text" class="form-control form-control-sm" id="siteAccountName" name="site_account_name" value="{{ $prefill['account_name'] }}" placeholder="{{ __('modals.subscribe.form.site_account_name') }}" required>
+                <label class="form-label">Your site account name</label>
+                <input type="text" class="form-control form-control-sm" id="siteAccountName" name="site_account_name" value="{{ $prefill['account_name'] }}" placeholder="your_account" required>
               </div>
 
               <div class="mb-3">
-                <label class="form-label">{{ __('modals.subscribe.form.txid') }}</label>
+                <label class="form-label">Transaction ID</label>
                 <input type="text" class="form-control form-control-sm" id="txid" name="txid" placeholder="9F3XZ1..." required>
               </div>
 
               <div class="mb-3">
-                <label class="form-label">{{ __('modals.subscribe.form.email') }}</label>
+                <label class="form-label">Notification email</label>
                 <input type="email" class="form-control form-control-sm" id="email" name="email" value="{{ $prefill['email'] }}" required>
               </div>
 
               <div class="mb-2">
-                <label class="form-label">{{ __('modals.subscribe.form.note') }}</label>
-                <textarea class="form-control form-control-sm" name="note" rows="2" placeholder="{{ __('modals.subscribe.form.note_placeholder') }}"></textarea>
+                <label class="form-label">Note (optional)</label>
+                <textarea class="form-control form-control-sm" name="note" rows="2" placeholder="Any transfer details..."></textarea>
               </div>
 
               <input type="hidden" id="provider" name="provider" value="">
@@ -137,8 +136,8 @@
       </div>
 
       <div class="modal-footer">
-        <button type="submit" id="subscribeSendBtn" class="btn btn-primary">{{ __('modals.subscribe.btn.submit') }}</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+        <button type="submit" id="subscribeSendBtn" class="btn btn-primary">Transferred — Send request</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
       </div>
     </form>
   </div>
@@ -146,7 +145,7 @@
 
 @push('styles')
 <style>
-  /* تحسين بسيط للشكل */
+  /* minor visual enhancement */
   .subscribe-side{ background:#fbfbfd; }
   @media (max-width: 767.98px){
     .modal .rounded-4{ border-radius: .75rem !important; }
@@ -167,22 +166,22 @@
     const pFld = modal.querySelector('#fieldPaypal');
     const provider = modal.querySelector('#provider');
 
-    // إظهار معلومات وحقول الجهة المناسبة
     const isJordan = where === 'jordan';
     jBox?.classList.toggle('d-none', !isJordan);
     iBox?.classList.toggle('d-none',  isJordan);
     wFld?.classList.toggle('d-none', !isJordan);
     pFld?.classList.toggle('d-none',  isJordan);
 
-    // required للحقول
-    modal.querySelector('[name="sender_wallet_name"]')?.toggleAttribute('required', isJordan);
-    modal.querySelector('[name="sender_paypal_email"]')?.toggleAttribute('required', !isJordan);
+    // toggle required
+    const wInput = modal.querySelector('[name="sender_wallet_name"]');
+    const pInput = modal.querySelector('[name="sender_paypal_email"]');
+    if (wInput) { isJordan ? wInput.setAttribute('required', 'required') : wInput.removeAttribute('required'); }
+    if (pInput) { !isJordan ? pInput.setAttribute('required', 'required') : pInput.removeAttribute('required'); }
 
-    if(provider) provider.value = isJordan ? 'local_wallet' : 'paypal';
+    if(provider) provider.value = isJordan ? 'cliq' : 'paypal';
   }
 
   modal.addEventListener('shown.bs.modal', ()=>{
-    // default select (لو ما كان مختار)
     const checked = modal.querySelector('input[name="where"]:checked');
     if (!checked){
       const def = modal.querySelector('input[name="where"][value="jordan"]');
