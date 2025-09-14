@@ -10,7 +10,10 @@ use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
-
+    // إنشاء تقييم جديد
+    // POST /conversations/{conversation}/reviews
+// app/Http/Controllers/ReviewController.php
+// app/Http/Controllers/ReviewController.php
 public function store(Request $req, Conversation $conversation)
 {
     $this->authorize('view', $conversation);
@@ -24,6 +27,7 @@ public function store(Request $req, Conversation $conversation)
     $receiverId = $conversation->users()->where('users.id', '!=', $senderId)->value('users.id');
     abort_if(!$receiverId, 403);
 
+    // لا تقيّم نفسك
     if ((int)$receiverId === (int)$senderId) {
         $msg = 'لا يمكنك تقييم نفسك.';
         return $req->ajax()
@@ -33,12 +37,14 @@ public function store(Request $req, Conversation $conversation)
 
     return \DB::transaction(function() use ($req, $senderId, $receiverId) {
 
+        // اقفل أي تقييمات لنفس الزوج لتفادي السباق
         \DB::table('reviews')
             ->where('sender_id',  $senderId)
-            ->where('receved_id', $receiverId) 
+            ->where('receved_id', $receiverId) // عدّل إلى received_id إذا كان اسم عمودك الصحيح
             ->lockForUpdate()
             ->get();
 
+        // مرّة واحدة فقط لكل (sender -> receiver)
         $alreadyReviewed = \DB::table('reviews')
             ->where('sender_id',  $senderId)
             ->where('receved_id', $receiverId)
@@ -51,6 +57,7 @@ public function store(Request $req, Conversation $conversation)
                 : back()->withErrors(['review_limit'=>$msg])->withInput();
         }
 
+        // إنشاء التقييم
         $review = Review::create([
             'sender_id'         => $senderId,
             'receved_id'        => $receiverId,
@@ -68,7 +75,8 @@ public function store(Request $req, Conversation $conversation)
 
 
 
-    
+    // تعديل التقييم (المرسل فقط)
+    // PATCH /conversations/{conversation}/reviews/{review}
     public function update(Request $req, Conversation $conversation, Review $review)
     {
         $this->authorize('view', $conversation);
@@ -87,7 +95,8 @@ public function store(Request $req, Conversation $conversation)
             : back()->with('success', 'تم تحديث التقييم.');
     }
 
-   
+    // رد المستلم على التقييم
+    // PATCH /conversations/{conversation}/reviews/{review}/reply
     public function reply(Request $req, Conversation $conversation, Review $review)
     {
         $this->authorize('view', $conversation);
@@ -108,7 +117,8 @@ public function store(Request $req, Conversation $conversation)
             : back()->with('success', 'تم إضافة الرد على التقييم.');
     }
 
-   
+    // حذف التقييم (منشئ التقييم فقط)
+    // DELETE /conversations/{conversation}/reviews/{review}
     public function destroy(Request $req, Conversation $conversation, Review $review)
     {
         $this->authorize('view', $conversation);

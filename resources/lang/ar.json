@@ -16,7 +16,36 @@
   "header.notifications": "الإشعارات",
   "lang.ar": "العربية",
   "lang.en": "English",
+ "mail.user": "مستخدم",
 
+  "mail.invitation.created.title": "لقد استلمت دعوة جديدة",
+  "mail.invitation.created.body": "مرحباً :receiver، قام :sender بإرسال دعوة لك على :brand.",
+  "mail.invitation.created.subject": "دعوة جديدة من :name",
+  "mail.invitation.message": "الرسالة",
+  "mail.invitation.view_site": "الذهاب إلى الموقع",
+  "mail.invitation.footer": "شكراً لاستخدامك :brand.",
+
+  "mail.invitation.sender.accepted_subject": "تم قبول دعوتك",
+  "mail.invitation.sender.rejected_subject": "تم رفض دعوتك",
+  "mail.invitation.receiver.accepted_subject": "لقد قبلت الدعوة",
+  "mail.invitation.receiver.rejected_subject": "لقد رفضت الدعوة",
+
+  "mail.invitation.sender.accepted_title": "🎉 تم قبول دعوتك",
+  "mail.invitation.sender.rejected_title": "تم رفض دعوتك",
+  "mail.invitation.receiver.accepted_title": "لقد قبلت الدعوة",
+  "mail.invitation.receiver.rejected_title": "لقد رفضت الدعوة",
+
+  "mail.invitation.sender.accepted_body": "خبر سار! قام :receiver بقبول دعوتك.",
+  "mail.invitation.sender.rejected_body": "قام :receiver برفض دعوتك.",
+  "mail.invitation.receiver.accepted_body": "لقد قبلت دعوة :sender.",
+  "mail.invitation.receiver.rejected_body": "لقد رفضت دعوة :sender.",
+
+  "mail.invitation.open_chat": "فتح المحادثة",
+  "mail.chat.new_message_subject": "رسالة جديدة من :name",
+  "mail.chat.new_message_title": "لديك رسالة جديدة",
+  "mail.chat.new_message_body": "لقد استلمت رسالة جديدة من :sender على :brand.",
+  "mail.chat.open_conversation": "فتح المحادثة",
+  "mail.invitation.visit_site": "زيارة الموقع",
 
 
     "notifications.new_messages": "رسالة جديدة",
@@ -38,6 +67,9 @@
   "home.hero.stats.popular": "الأكثر شيوعاً",
   "home.hero.stats.skills_available": "مهارة متاحة",
   "home.hero.stats.sessions_done": "جلسات تمّت",
+  "nav.gamification":"نظام التحفيز",
+  "nav.learning_requests": "طلبات التعلم",
+  
   "home.hero.search.help": "اكتب اسم مهارة مباشرة أو اختر من الاقتراحات.",
   "common.search": "بحث",
 
@@ -139,6 +171,9 @@
   "profile.teachable_skills.filter.placeholder_classification": "اختر الفئة...",
   "profile.teachable_skills.table.skill": "المهارة",
   "profile.teachable_skills.table.classification": "الفئة",
+    "profile.teachable_skills.table.description": "الشرح",
+
+  "profile.teachable_skills.table.level": "المستوى",
   "profile.teachable_skills.table.select": "الاختيار",
   "profile.teachable_skills.pagination.showing": "عرض :from إلى :to من :total مهارات",
   "profile.pagination.prev": "السابقة",
@@ -283,11 +318,11 @@
 "modals.subscribe.safe_note": "سيتم استخدام بريدك الإلكتروني فقط لأغراض الإشعار ولن يتم مشاركته مع جهات خارجية.",
   "conversations.fallback.title": "محادثة",
 "common.count": "عدد",
-"premium.go_premium": "اشترك في بريميوم",
+"premium.go_premium": "اشترك بريميوم",
   "conversations.errors.send_failed": "تعذر الإرسال",
   "conversations.errors.unexpected": "حدث خطأ غير متوقع",
   "profile.i_am_mentor": "أنا مرشد",
-  "profile.i_am_mentor_help": "حدد هذا الخيار إذا كنت ترغب في تعليم مهاراتك للآخرين.",
+  "profile.i_am_mentor_help": " عند التفعيل، ستكون متا ًحا لتعليم اآلخرين دون طلب مهارة بالمقابل.",
   "profile.role.mentor": "مرشد",
   "badges.mentor": "مرشد",
   "filters.mentor_only": "عرض المرشدين فقط",

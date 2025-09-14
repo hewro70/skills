@@ -448,21 +448,25 @@
   </div>
 @endauth
 
-@endsection<script>
-(function(){
+@endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function(){
   const form     = document.getElementById('filterForm');
-  if (!form) return;
-
   const root     = document.getElementById('results-root');
   const usersBox = document.getElementById('users-container');
   const pagBox   = document.getElementById('pagination-links');
-  const baseUrl  = form.action; // route('theme.skills')
+  if (!form || !root || !usersBox || !pagBox) return;
+
+  const baseUrl  = form.action;
   const HEADERS  = { 'X-Requested-With':'XMLHttpRequest', 'Accept':'application/json' };
-  const FETCH_TIMEOUT_MS = 7000; // failsafe
+  const FETCH_TIMEOUT_MS = 7000;
 
-  let inflight = null; // AbortController
+  let inflight = null;
+  let debounceTimer = null;
 
-  function setLoading(on){ root && root.classList.toggle('loading', !!on); }
+  function setLoading(on){ root.classList.toggle('loading', !!on); }
+
   function buildParams(extra = {}){
     const p = new URLSearchParams(new FormData(form));
     Object.entries(extra).forEach(([k,v]) => { if (v===null) p.delete(k); else p.set(k,v); });
@@ -470,21 +474,16 @@
     return p;
   }
 
-  // طلب مع تايم أوت + fallback
-  async function fetchJsonWithFallback(url, fallbackUrlIfHtml) {
+  async function fetchJsonWithFallback(url) {
     if (inflight) inflight.abort();
     inflight = new AbortController();
-
-    // تايم أوت
     const timer = setTimeout(() => inflight.abort(), FETCH_TIMEOUT_MS);
 
     try {
       const res = await fetch(url, { headers: HEADERS, credentials:'same-origin', signal: inflight.signal });
       const ct  = res.headers.get('Content-Type') || '';
-
-      // لو مش JSON (HTML غالبًا): نزّل الصفحة كاملة
       if (!ct.includes('application/json')) {
-        window.location.href = res.url || fallbackUrlIfHtml || url;
+        window.location.href = url.replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
         return null;
       }
       const data = await res.json();
@@ -499,51 +498,44 @@
   async function load(urlOrParams, push=false){
     setLoading(true);
     try{
-      const url = typeof urlOrParams === 'string'
-        ? urlOrParams
-        : (baseUrl + '?' + urlOrParams.toString());
+      const url = typeof urlOrParams === 'string' ? urlOrParams : (baseUrl + '?' + urlOrParams.toString());
+      const data = await fetchJsonWithFallback(url);
+      if (!data) return;
 
-      const data = await fetchJsonWithFallback(url, url);
-      if (!data) return; // تم التحويل الكامل
-
-      // حدّث الشبكة
       if (data.users_html)      usersBox.innerHTML = data.users_html;
       if (data.pagination_html) pagBox.innerHTML   = data.pagination_html;
 
-      // نظّف الرابط الظاهر
       const clean = (data.url || url).replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
       push ? history.pushState(null,'', clean) : history.replaceState(null,'', clean);
-
-      // لو السيرفر صحّح الصفحة (page>last) حمّل الرابط المصحّح مرة ثانية (جزئي)
-      if (data.url && data.url !== url) {
-        const u = new URL(clean, window.location.href);
-        u.searchParams.set('partial', '1');
-        await load(u.toString(), false);
-        return;
-      }
-
-      // سكروول خفيف لبداية النتائج
       root.scrollIntoView({ behavior:'smooth', block:'start' });
-    } catch (e){
-      // فشل غريب؟ نزّل الصفحة كاملة كحل أخير
+    } catch (_) {
       try {
         const loc = typeof urlOrParams === 'string' ? urlOrParams : (baseUrl + '?' + urlOrParams.toString());
-        const fallback = (loc + (loc.includes('?') ? '&' : '?')).replace(/[?&]partial=1(&|$)/,'$1');
-        window.location.href = fallback;
-      } catch(_) {}
-    } finally {
-      setLoading(false);
-    }
+        window.location.href = loc.replace(/([?&])partial=1(&|$)/,'$1').replace(/[?&]$/,'');
+      } catch {}
+    } finally { setLoading(false); }
   }
 
-  // ===== الأحداث =====
+  // === (A) اطلب من الباك مباشرة عند أي تغيير فلتر ===
+  form.addEventListener('change', (e)=>{
+    const el = e.target;
+    if (!el || !el.name) return;
+    if (el.disabled) return;                 // تجاهل المعطّل (حالة غير بريميوم)
+    if (el.name === 'search' || el.name === 'sort') return;
 
-  // الفرز
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(()=>{
+      const params = buildParams({ page: null });
+      load(params, true);
+    }, 120);
+  });
+
+  // === (B) الفرز
   form.querySelector('select[name="sort"]')?.addEventListener('change', ()=>{
     load(buildParams({ page:null }), true);
   });
 
-  // البحث (debounce) + منع submit العادي
+  // === (C) البحث النصّي (debounce)
   let t;
   const search = form.querySelector('input[name="search"]');
   if (search){
@@ -557,33 +549,27 @@
     });
   }
 
-  // أي تغيير لاحق بالفورم يصفّر الصفحة
-  form.addEventListener('change', (e)=>{
-    const n = e.target?.name || '';
-    if (n && n !== 'search' && n !== 'sort') load(buildParams({ page:null }), true);
-  });
-
-  // الباجيناشن (تفويض) — استخدم a.href المطلق
+  // === (D) الباجينيشن AJAX
   document.addEventListener('click', function(ev){
     const a = ev.target.closest('#pagination-links a');
     if (!a) return;
-
-    const href = a.href;
-    if (!href || href === '#' || href.startsWith('javascript:')) return;
-
     ev.preventDefault();
-
-    const u = new URL(href, window.location.href); // مهم: base = location.href
-    u.searchParams.set('partial', '1');
+    const u = new URL(a.href, window.location.href);
+    u.searchParams.set('partial','1');
     load(u.toString(), true);
   });
 
-  // back/forward
+  // === (E) رجوع/تقدّم
   window.addEventListener('popstate', ()=>{
     const u = new URL(window.location.href);
     u.searchParams.set('partial','1');
     load(u.toString(), false);
   });
 
-})();
+  // لغايات التشخيص (احذفها بعد ما تتأكد)
+  console.debug('[filters] ready: autosubmit on change');
+});
 </script>
+@endpush
+
+

@@ -2,6 +2,7 @@
 
 return [
 
+    // ===== HERO (you already have keys; keeping parity) =====
     'hero' => [
         'badge'    => 'Learn, Teach, and Exchange Skills',
         'title'    => 'Skills Hub',

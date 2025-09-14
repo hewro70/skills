@@ -1,5 +1,53 @@
 @extends('theme.master')
 
+
+  @php
+    // القيمة الخام (قد تكون رقم أو نص)
+    $raw = $language->pivot->level ?? null;
+    $key = null; // نحولها لمفتاح 1..5
+
+    if (is_numeric($raw)) {
+        $num = (int) $raw;
+        if ($num >= 1 && $num <= 5)       $key = $num;        // 1..5
+        elseif ($num >= 0 && $num <= 4)   $key = $num + 1;    // 0..4 -> 1..5
+    } else {
+        $val = trim(mb_strtolower((string) $raw));
+        // دعم صيغ شائعة (عربي/إنجليزي/CEFR)
+        $mapStr = [
+          'a1'=>1, 'beginner'=>1, 'مبتدئ'=>1,
+          'a2'=>2, 'elementary'=>2, 'أساسي'=>2,
+          'b1'=>3, 'intermediate'=>3, 'متوسط'=>3,
+          'b2'=>4, 'upper-intermediate'=>4, 'متقدم'=>4,
+          'c1'=>5, 'c2'=>5, 'fluent'=>5, 'native'=>5, 'طليق'=>5, 'متحدث أصلي'=>5,
+        ];
+        if (isset($mapStr[$val])) $key = $mapStr[$val];
+    }
+
+    // التسميات والألوان
+    $labels = [
+      1 => ['label'=>'مبتدئ','abbr'=>'A1','class'=>'lv-beginner'],
+      2 => ['label'=>'أساسي','abbr'=>'A2','class'=>'lv-elementary'],
+      3 => ['label'=>'متوسط','abbr'=>'B1','class'=>'lv-intermediate'],
+      4 => ['label'=>'متقدم','abbr'=>'B2','class'=>'lv-advanced'],
+      5 => ['label'=>'طليق','abbr'=>'C1/C2','class'=>'lv-native'],
+    ];
+
+    $meta = $labels[$key] ?? ['label'=>'غير محدد','abbr'=>'','class'=>'lv-unknown'];
+  @endphp
+    @php
+    // لاحظ: العمود عندك اسمه ratings
+    $avgVal = $user->receivedReviews()->avg('ratings');
+    $avg    = $avgVal !== null ? round((float)$avgVal, 1) : 0.0;
+
+    $count  = $user->receivedReviews()->count();
+
+    // آخر 5 تقييمات (لا نحدد أعمدة لتفادي Unknown column)
+    $latest = $user->receivedReviews()
+                  ->orderByDesc('created_at')
+                  ->limit(5)
+                  ->get();
+  @endphp
+  
 @section('content')
 <div class="profile-page rtl" dir="rtl">
   <div class="container py-4">
@@ -16,14 +64,26 @@
                 <i class="bi bi-geo-alt-fill me-1"></i>
                {{ $user->location_text }}
               </p>
+              
+  <div class="d-flex align-items-center gap-3 mb-3">
+    <div class="rating-summary d-flex align-items-center">
+      @for ($i=1; $i<=5; $i++)
+        <i class="bi bi-star-fill {{ $i <= floor($avg) ? 'text-warning' : 'text-secondary' }}"></i>
+      @endfor
+      <span class="ms-2 fw-bold">{{ number_format($avg, 1) }}</span>
+      <span class="text-muted ms-1">/ 5</span>
+    </div>
+    <span class="text-muted">({{ $count }} تقييم)</span>
+  </div>
+
 
               <div class="profile-meta d-flex align-items-center flex-wrap gap-3">
                 {{--  <span class="chip chip-success">
                   <i class="bi bi-circle-fill"></i> {{ __('profile.available_now') }}
                 </span>  --}}
-                <span class="chip chip-primary">
-                  <i class="bi bi-star-fill"></i> {{ __('profile.top_rated') }}
-                </span>
+                <!--<span class="chip chip-primary">-->
+                <!--  <i class="bi bi-star-fill"></i> {{ __('profile.top_rated') }}-->
+                <!--</span>-->
                 <span class="chip chip-muted">
                  @if($user->is_mentor)
   
@@ -51,18 +111,18 @@
 
 
 
-              <div class="profile-rating mt-3 d-flex align-items-center flex-wrap gap-3">
-                <span class="stat">
-                  <i class="bi bi-check-circle-fill text-success"></i>
-                  <b class="mx-1">{{ $user->receivedInvitations()->where('reply','قبول')->count() }}</b>
-                  {{ __('profile.accepted') }}
-                </span>
-                <span class="stat">
-                  <i class="bi bi-x-circle-fill text-danger"></i>
-                  <b class="mx-1">{{ $user->receivedInvitations()->where('reply','رفض')->count() }}</b>
-                  {{ __('profile.rejected') }}
-                </span>
-              </div>
+              <!--<div class="profile-rating mt-3 d-flex align-items-center flex-wrap gap-3">-->
+              <!--  <span class="stat">-->
+              <!--    <i class="bi bi-check-circle-fill text-success"></i>-->
+              <!--    <b class="mx-1">{{ $user->receivedInvitations()->where('reply','قبول')->count() }}</b>-->
+              <!--    {{ __('profile.accepted') }}-->
+              <!--  </span>-->
+              <!--  <span class="stat">-->
+              <!--    <i class="bi bi-x-circle-fill text-danger"></i>-->
+              <!--    <b class="mx-1">{{ $user->receivedInvitations()->where('reply','رفض')->count() }}</b>-->
+              <!--    {{ __('profile.rejected') }}-->
+              <!--  </span>-->
+              <!--</div>-->
             </div>
 
             <div class="profile-image-container ms-3">
@@ -115,39 +175,6 @@
                     <div class="language-item d-flex justify-content-between align-items-center py-2 px-3 mb-2">
   <span class="fw-semibold">{{ $language->name }}</span>
 
-  @php
-    // القيمة الخام (قد تكون رقم أو نص)
-    $raw = $language->pivot->level ?? null;
-    $key = null; // نحولها لمفتاح 1..5
-
-    if (is_numeric($raw)) {
-        $num = (int) $raw;
-        if ($num >= 1 && $num <= 5)       $key = $num;        // 1..5
-        elseif ($num >= 0 && $num <= 4)   $key = $num + 1;    // 0..4 -> 1..5
-    } else {
-        $val = trim(mb_strtolower((string) $raw));
-        // دعم صيغ شائعة (عربي/إنجليزي/CEFR)
-        $mapStr = [
-          'a1'=>1, 'beginner'=>1, 'مبتدئ'=>1,
-          'a2'=>2, 'elementary'=>2, 'أساسي'=>2,
-          'b1'=>3, 'intermediate'=>3, 'متوسط'=>3,
-          'b2'=>4, 'upper-intermediate'=>4, 'متقدم'=>4,
-          'c1'=>5, 'c2'=>5, 'fluent'=>5, 'native'=>5, 'طليق'=>5, 'متحدث أصلي'=>5,
-        ];
-        if (isset($mapStr[$val])) $key = $mapStr[$val];
-    }
-
-    // التسميات والألوان
-    $labels = [
-      1 => ['label'=>'مبتدئ','abbr'=>'A1','class'=>'lv-beginner'],
-      2 => ['label'=>'أساسي','abbr'=>'A2','class'=>'lv-elementary'],
-      3 => ['label'=>'متوسط','abbr'=>'B1','class'=>'lv-intermediate'],
-      4 => ['label'=>'متقدم','abbr'=>'B2','class'=>'lv-advanced'],
-      5 => ['label'=>'طليق','abbr'=>'C1/C2','class'=>'lv-native'],
-    ];
-
-    $meta = $labels[$key] ?? ['label'=>'غير محدد','abbr'=>'','class'=>'lv-unknown'];
-  @endphp
   
 
   <div class="language-level">
@@ -168,19 +195,7 @@
 <div class="profile-section" id="reviews">
   <h4 class="section-title">التقييمات</h4>
 
-  @php
-    // لاحظ: العمود عندك اسمه ratings
-    $avgVal = $user->receivedReviews()->avg('ratings');
-    $avg    = $avgVal !== null ? round((float)$avgVal, 1) : 0.0;
 
-    $count  = $user->receivedReviews()->count();
-
-    // آخر 5 تقييمات (لا نحدد أعمدة لتفادي Unknown column)
-    $latest = $user->receivedReviews()
-                  ->orderByDesc('created_at')
-                  ->limit(5)
-                  ->get();
-  @endphp
 
   <div class="d-flex align-items-center gap-3 mb-3">
     <div class="rating-summary d-flex align-items-center">
@@ -232,8 +247,42 @@
 </div>
 
         </div> {{-- /profile-card --}}
-        @auth
-  <div class="modal fade mt-5" id="globalInviteModal" tabindex="-1" aria-hidden="true">
+@php
+  $me = auth()->user();
+  $isPremium = auth()->check() && (($me->is_premium ?? false) || (method_exists($me,'hasActiveSubscription') && $me->hasActiveSubscription()));
+@endphp
+
+@php
+  // ==== حساب المتبقي لهذا الشهر (بدون API) ====
+  $start = now()->startOfMonth();
+  $end   = now()->endOfMonth();
+  $me    = auth()->user();
+
+  $sentThisMonth = $me
+      ? ( method_exists($me, 'sentInvitations')
+            ? (clone $me->sentInvitations())
+                  ->whereBetween('created_at', [$start, $end])
+                  ->count()
+            : \App\Models\Invitation::where('sender_id', $me->id)
+                  ->whereBetween('created_at', [$start, $end])
+                  ->count()
+        )
+      : 0;
+
+  $isPremium = $me && ( ($me->is_premium ?? false)
+                || (method_exists($me,'hasActiveSubscription') && $me->hasActiveSubscription()) );
+
+  $limit     = $isPremium ? null : 5;
+  $remaining = $limit === null ? null : max(0, $limit - $sentThisMonth);
+@endphp
+
+@auth
+  <!-- ===== Modal: Global Invite ===== -->
+  <div class="modal fade mt-5" id="globalInviteModal" tabindex="-1" aria-hidden="true"
+       data-is-premium="{{ $isPremium ? '1' : '0' }}"
+       data-limit="{{ $limit ?? '' }}"
+       data-sent="{{ $sentThisMonth }}"
+       data-remaining="{{ $remaining ?? '' }}">
     <div class="modal-dialog">
       <form class="modal-content" id="globalInviteForm" data-action="{{ route('invitations.send') }}">
         @csrf
@@ -241,25 +290,42 @@
           <h5 class="modal-title" id="globalInviteTitle">{{ __('invitations.title') ?? 'Send Invitation' }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('invitations.cancel') ?? 'Close' }}"></button>
         </div>
+
         <div class="modal-body">
           <input type="hidden" name="destination_user_id" id="inviteUserId">
-          <div id="inviteFreeBox" class="d-none">
+
+          {{-- صندوق معلومات للمستخدم المجاني (يعرض المتبقي الحقيقي لهذا الشهر) --}}
+          <div id="inviteFreeBox" class="{{ $isPremium ? 'd-none' : '' }}">
             <div class="alert alert-info d-flex align-items-center gap-2">
               <i class="bi bi-info-circle"></i>
-              <div>{{ __('invitations.free.remaining_html', ['remaining'=>0,'limit'=>5]) ?? 'Free invites info' }}</div>
+              <div>
+                المتبقي من الدعوات المجانية لهذا الشهر:
+                <b id="inviteRemainingText">{{ $remaining }}</b> من 5.
+              </div>
             </div>
           </div>
-          <div id="invitePremiumBox" class="d-none">
-            <label class="form-label">{{ __('invitations.premium.message_label') ?? 'Message' }}</label>
-            <textarea name="message" id="inviteMessage" class="form-control" rows="4" maxlength="1000"
-                      placeholder="{{ __('invitations.premium.message_label') ?? 'Write a message...' }}"></textarea>
-            <div class="form-text">{{ __('invitations.premium.message_help') ?? '' }}</div>
-          </div>
+
+          {{-- خانة الرسالة للبريميوم فقط --}}
+          @if($isPremium)
+            <div id="invitePremiumBox">
+              <label class="form-label">{{ __('invitations.premium.message_label') ?? 'Message' }}</label>
+              <textarea name="message" id="inviteMessage" class="form-control" rows="4" maxlength="1000"
+                        placeholder="{{ __('invitations.premium.message_label') ?? 'Write a message...' }}"></textarea>
+              <div class="form-text">{{ __('invitations.premium.message_help') ?? '' }}</div>
+            </div>
+          @else
+            {{-- موجودة لكن معطّلة لغير البريميوم --}}
+            <div id="invitePremiumBox" class="d-none">
+              <textarea id="inviteMessage" class="form-control" rows="4" maxlength="1000" disabled></textarea>
+            </div>
+          @endif
+
           <div class="mt-3 d-none" id="globalInviteAlert"></div>
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('invitations.cancel') ?? 'Cancel' }}</button>
-          <button type="submit" class="btn btn-primary">
+          <button type="submit" class="btn btn-primary" id="inviteSubmitBtn">
             <span class="send-text">{{ __('invitations.send') ?? 'Send' }}</span>
             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
           </button>
@@ -269,99 +335,131 @@
   </div>
 @endauth
 
-      </div>
-    </div>
-  </div>
-</div>
 
 <script>
 (function(){
-  // فتح المودال من زر البروفايل
-  document.addEventListener('click', async function(e){
+  // فتح المودال من زر البروفايل — "لوكل" بدون API
+  document.addEventListener('click', function(e){
     const btn = e.target.closest('.js-open-invite');
     if(!btn) return;
 
-    // قبل أي شيء: افحص الأهلية
-    try{
-      const res  = await fetch(`{{ route('invitations.check') }}`, {
-        method: 'GET', headers:{ 'X-Requested-With':'XMLHttpRequest' }, credentials:'same-origin'
-      });
-      const data = await res.json();
-      if (data.status === 'unauthenticated') {
-        // زائر: افتح مودال التسجيل إن وجد وإلا وجّهه للتسجيل
-        const m = document.getElementById('registerModal_users');
-        if (m && window.bootstrap) new bootstrap.Modal(m).show();
-        else window.location.href = `{{ route('register') }}`;
-        return;
+    // لو مش عامل تسجيل دخول، افتح مودال التسجيل/روح عالريجيستر (نفس منطقك)
+    @if(!auth()->check())
+      const m = document.getElementById('registerModal_users');
+      if (m && window.bootstrap) { new bootstrap.Modal(m).show(); }
+      else { window.location.href = `{{ route('register') }}`; }
+      return;
+    @endif
+
+    const modalEl    = document.getElementById('globalInviteModal');
+    const isPremium  = modalEl?.dataset.isPremium === '1';
+    const submitBtn  = document.getElementById('inviteSubmitBtn');
+    const freeBox    = document.getElementById('inviteFreeBox');
+    const premBox    = document.getElementById('invitePremiumBox');
+    const msgEl      = document.getElementById('inviteMessage');
+    const alertEl    = document.getElementById('globalInviteAlert');
+    const remainingEl= document.getElementById('inviteRemainingText');
+
+    // اقرأ القيم الممرّرة من الـ Blade
+    const limitStr   = modalEl?.dataset.limit || '';
+    const remStr     = modalEl?.dataset.remaining || '';
+    const limit      = limitStr !== '' ? parseInt(limitStr, 10) : null;
+    let remaining    = remStr !== '' ? parseInt(remStr, 10) : null;
+
+    const userId     = btn.dataset.userId;
+    const userName   = btn.dataset.userName || '';
+
+    // منع فتح المودال إذا الرصيد خلّص لغير البريميوم
+    if (!isPremium && remaining !== null && remaining <= 0) {
+      if (window.Swal) {
+        Swal.fire({ icon:'info', title:'انتهى الحد المتاح', text:'لقد استهلكت جميع الدعوات المجانية (5) لهذا الشهر.' });
+      } else {
+        alert('لقد استهلكت جميع الدعوات المجانية (5) لهذا الشهر.');
       }
-      if (data.status === 'incomplete') {
-        // غير مكتمل
-        Swal.fire({
-          icon:'info', title:'الملف الشخصي غير مكتمل',
-          html:`يجب إكمال ملفك الشخصي 100% قبل إرسال الدعوات.<br>
-                <small>نسبة الاكتمال الحالية: <b>${data.completion_percentage ?? 0}%</b></small><br>
-                <a href="{{ route('myProfile') }}" class="btn btn-primary mt-2">إكمال الملف الآن</a>`
-        });
-        return;
-      }
-      if (data.status === 'limit_reached') {
-        Swal.fire({ icon:'info', title:'انتهى الحد المتاح', text: data.message || 'لقد استهلكت جميع الدعوات المتاحة.' });
-        return;
-      }
-      // مقبول: جهّز المودال
-      const userId   = btn.dataset.userId;
-      const userName = btn.dataset.userName || '';
-
-      const titleEl  = document.getElementById('globalInviteTitle');
-      const userIdEl = document.getElementById('inviteUserId');
-      const freeBox  = document.getElementById('inviteFreeBox');
-      const premBox  = document.getElementById('invitePremiumBox');
-      const msgEl    = document.getElementById('inviteMessage');
-      const alertEl  = document.getElementById('globalInviteAlert');
-
-      titleEl.textContent = 'إرسال دعوة إلى ' + userName;
-      userIdEl.value = userId;
-      alertEl.className = 'd-none'; alertEl.textContent = '';
-      if (msgEl) msgEl.value = '';
-
-      // إظهار صندوق مناسب (لو عندك منطق تمييز بريميوم)
-      premBox && premBox.classList.remove('d-none');
-      freeBox && freeBox.classList.add('d-none');
-
-      new bootstrap.Modal(document.getElementById('globalInviteModal')).show();
-    }catch(_){
-      Swal.fire({ icon:'error', title:'تعذّر التحقق', text:'حاول لاحقًا.' });
+      return;
     }
+
+    // حضّر عناصر المودال
+    const titleEl  = document.getElementById('globalInviteTitle');
+    const userIdEl = document.getElementById('inviteUserId');
+
+    titleEl.textContent = 'إرسال دعوة إلى ' + userName;
+    userIdEl.value = userId;
+    alertEl.className = 'd-none'; alertEl.textContent = '';
+
+    // إظهار/إخفاء حسب الباقة
+    if (isPremium) {
+      freeBox?.classList.add('d-none');
+      premBox?.classList.remove('d-none');
+      if (msgEl) { msgEl.removeAttribute('disabled'); msgEl.setAttribute('name','message'); msgEl.value=''; }
+      if (submitBtn) submitBtn.disabled = false;
+    } else {
+      premBox?.classList.add('d-none');
+      freeBox?.classList.remove('d-none');
+      if (msgEl) { msgEl.value=''; msgEl.setAttribute('disabled','disabled'); msgEl.removeAttribute('name'); }
+      if (remainingEl && remaining !== null) remainingEl.textContent = remaining;
+      if (submitBtn) submitBtn.disabled = (remaining !== null && remaining <= 0);
+    }
+
+    new bootstrap.Modal(modalEl).show();
   });
 
-  // إرسال الدعوة من المودال
+  // إرسال الدعوة من المودال — منع محلي + تحديث المتبقي مباشر
   document.addEventListener('submit', async function(e){
     const form = e.target.closest('#globalInviteForm');
     if(!form) return;
     e.preventDefault();
 
+    const modalEl    = document.getElementById('globalInviteModal');
+    const isPremium  = modalEl?.dataset.isPremium === '1';
+    const submitBtn  = document.getElementById('inviteSubmitBtn');
+    const spinner    = submitBtn?.querySelector('.spinner-border');
+    const sendTxt    = submitBtn?.querySelector('.send-text');
+    const alertBox   = document.getElementById('globalInviteAlert');
+    const remainingEl= document.getElementById('inviteRemainingText');
+
+    // اقرأ/حدّث remaining من dataset
+    let remaining = modalEl?.dataset.remaining ? parseInt(modalEl.dataset.remaining,10) : null;
+
+    // حماية إضافية: لو خلّص الرصيد لا ترسل
+    if (!isPremium && remaining !== null && remaining <= 0) {
+      if (window.Swal) {
+        Swal.fire({ icon:'info', title:'انتهى الحد المتاح', text:'لا يمكنك إرسال المزيد من الدعوات هذا الشهر.' });
+      } else {
+        alert('لا يمكنك إرسال المزيد من الدعوات هذا الشهر.');
+      }
+      return;
+    }
+
     if (form.dataset.busy === '1') return;
     form.dataset.busy = '1';
 
-    const btn      = form.querySelector('button[type="submit"]');
-    const spinner  = btn.querySelector('.spinner-border');
-    const sendTxt  = btn.querySelector('.send-text');
-    const alertBox = document.getElementById('globalInviteAlert');
-    const fd       = new FormData(form);
-
-    btn.disabled = true; spinner.classList.remove('d-none'); sendTxt.textContent = 'جارٍ الإرسال…';
+    const fd = new FormData(form);
+    if (submitBtn) { submitBtn.disabled = true; }
+    if (spinner)   { spinner.classList.remove('d-none'); }
+    if (sendTxt)   { sendTxt.textContent = 'جارٍ الإرسال…'; }
 
     try{
       const res  = await fetch(form.dataset.action, {
-        method:'POST', headers:{ 'X-CSRF-TOKEN': `{{ csrf_token() }}` }, body:fd
+        method:'POST',
+        headers:{ 'X-CSRF-TOKEN': `{{ csrf_token() }}` },
+        body:fd
       });
-      const data = await res.json();
+      const data = await res.json().catch(()=>({}));
 
       alertBox.classList.remove('d-none','alert-success','alert-warning','alert-danger','mt-3');
       alertBox.classList.add('alert','mt-3', res.ok ? 'alert-success' : (res.status===422 ? 'alert-warning' : 'alert-danger'));
       alertBox.textContent = data.message || (res.ok ? 'تم إرسال الدعوة.' : 'تعذّر إرسال الدعوة.');
 
       if(res.ok){
+        // حدّث المتبقي محلياً لغير البريميوم
+        if (!isPremium && remaining !== null) {
+          remaining = Math.max(0, remaining - 1);
+          modalEl.dataset.remaining = String(remaining);
+          if (remainingEl) remainingEl.textContent = remaining;
+        }
+
+        // اغلق المودال بعد قليل
         setTimeout(()=>{
           const m = bootstrap.Modal.getInstance(document.getElementById('globalInviteModal'));
           m && m.hide();
@@ -372,12 +470,15 @@
       alertBox.classList.add('alert','alert-danger','mt-3');
       alertBox.textContent = 'حدث خطأ غير متوقع.';
     }finally{
-      btn.disabled = false; spinner.classList.add('d-none'); sendTxt.textContent = `{{ __('invitations.send') ?? 'Send' }}`;
+      if (submitBtn) { submitBtn.disabled = false; }
+      if (spinner)   { spinner.classList.add('d-none'); }
+      if (sendTxt)   { sendTxt.textContent = `{{ __('invitations.send') ?? 'Send' }}`; }
       form.dataset.busy = '0';
     }
   });
 })();
 </script>
+
 
 @endsection
 <style>

@@ -1,3 +1,19 @@
+
+<style>
+    /* تكبير حجم السويتش */
+.form-check-input.big-switch {
+  width: 3.2rem;     /* العرض */
+  height: 1.6rem;    /* الطول */
+  transform: scale(1.25); /* تكبير إضافي */
+  margin-top: 0.25rem;    /* يوازن المحاذاة مع النص */
+}
+
+/* تكبير دائرة المفتاح */
+.form-check-input.big-switch:checked {
+  background-size: 1rem 1rem;
+}
+
+</style>
 <form id="profileForm" method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="mb-4">
   @csrf
   @method('PATCH')
@@ -47,18 +63,22 @@
                 @endforeach
               </select>
             </div>
-            <div class="col-12">
-  <div class="form-check mt-2">
-    <input class="form-check-input" type="checkbox" id="is_mentor" name="is_mentor" value="1"
-           {{ old('is_mentor', $user->is_mentor) ? 'checked' : '' }}>
-    <label class="form-check-label fw-semibold" for="is_mentor">
+<div class="col-12">
+  <div class="form-check form-switch mt-2 stealth-check">
+    <input class="form-check-input big-switch" type="checkbox" role="switch" id="is_mentor" name="is_mentor" value="1"
+           {{ old('is_mentor', $user->is_mentor) ? 'checked' : '' }}
+           aria-describedby="isMentorHelp">
+    <label class="form-check-label fw-semibold ms-2" for="is_mentor">
       {{ __('profile.i_am_mentor') ?? 'أنا Mentor / معلم' }}
     </label>
-    <div class="form-text">
+    <div class="form-text" id="isMentorHelp">
       {{ __('profile.i_am_mentor_help') ?? 'فعّلها لو بتقدّم تعليم/إرشاد.' }}
     </div>
   </div>
 </div>
+
+
+
             <div class="col-12">
               <label for="about_me" class="form-label">{{ __('profile.basic.about_me') }}</label>
               <textarea class="form-control" id="about_me" name="about_me" rows="3">{{ old('about_me', $user->about_me) }}</textarea>
@@ -101,8 +121,8 @@
   <tr>
     <th width="30%">{{ __('profile.teachable_skills.table.skill') }}</th>
     <th width="30%">{{ __('profile.teachable_skills.table.classification') }}</th>
-    <th width="15%" class="text-center">Level</th>
-    <th width="15%">Description</th>
+    <th width="15%" class="text-center">{{ __('profile.teachable_skills.table.level') }}</th>
+    <th width="15%">{{ __('profile.teachable_skills.table.description') }}</th>
     <th width="10%" class="text-center">{{ __('profile.teachable_skills.table.select') }}</th>
   </tr>
 </thead>

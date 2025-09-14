@@ -270,11 +270,14 @@ private function decorateNames($items, string $locale)
     }
 private function hydrateNames($items, string $locale)
 {
+    // يقبل Collection أو array
     foreach ($items as $item) {
+        // رجّع name كسلسلة للّغة الحالية على نفس الأوبجكت (بدون حفظ DB)
         if (method_exists($item, 'getTranslation')) {
             $item->setAttribute('name', $item->getTranslation('name', $locale));
         }
 
+        // لو له علاقة classification -> نزبط اسمها برضه
         if ($item->relationLoaded('classification') && $item->classification && method_exists($item->classification, 'getTranslation')) {
             $item->classification->setAttribute('name', $item->classification->getTranslation('name', $locale));
         }

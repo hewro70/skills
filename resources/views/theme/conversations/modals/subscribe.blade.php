@@ -1,96 +1,88 @@
 {{-- resources/views/theme/conversations/modals/subscribe.blade.php --}}
+<html lang="{{ app()->getLocale() }}" dir="{{ app()->isLocale('ar') ? 'rtl' : 'ltr' }}">
 @php
   $modalId = $modalId ?? 'subscribeModal';
   $formId  = $formId  ?? 'subscribeForm';
 
-  // Client-required payment config (can be overridden via $config)
+  // Jordan-only config
   $config  = array_merge([
-    'price_local' => '3.5 JOD',                         // Inside Jordan
-    'price_intl'  => '4.99 USD',                        // Outside Jordan
-    'cliq_alias'  => 'ZALASKER',                        // CliQ alias
-    'paypal_link' => 'https://paypal.me/MaharatHub',    // PayPal link
+    'price_local' => '3.5 JOD',      // Inside Jordan (CliQ)
+    'cliq_alias'  => 'ZALASKER',     // CliQ alias
   ], $config ?? []);
 
   $prefill = array_merge([
     'email'        => auth()->user()->email ?? '',
     'account_name' => auth()->user()->name ?? 'your_account',
   ], $prefill ?? []);
+
+  $isRtl = app()->isLocale('ar');
 @endphp
 
 @push('styles')
 <style>
-  /* Keep modal body scroll only if needed */
   #{{ $modalId }} .modal-body{
     max-height: calc(100dvh - 170px);
     overflow: auto;
   }
-  /* Tighten vertical rhythm a bit */
   #{{ $modalId }} .border.rounded-4.p-3{ padding: .9rem !important; }
   #{{ $modalId }} .mb-3{ margin-bottom: .75rem !important; }
-
-  /* On small screens, reduce gaps */
   @media (max-width: 992px){
     #{{ $modalId }} .row.g-4{ row-gap: .75rem !important; }
   }
-  /* If viewport height is small, compact header/footer */
   @media (max-height: 700px){
     #{{ $modalId }} .modal-header, #{{ $modalId }} .modal-footer{ padding: .5rem .75rem; }
     #{{ $modalId }} .modal-title{ font-size: 1rem; }
   }
-
-  /* Light side background */
   .subscribe-side{ background:#fbfbfd; }
+  /* تحسين محاذاة النص عند RTL */
+  [dir="rtl"] #{{ $modalId }} .text-start { text-align: right !important; }
+  [dir="rtl"] #{{ $modalId }} .text-end   { text-align: left  !important; }
 </style>
 @endpush
 
-<div class="modal fade mt-5" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
+<div class="modal fade mt-3" id="{{ $modalId }}" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-    <form id="{{ $formId }}" class="modal-content">
+    <form id="{{ $formId }}" class="modal-content" action="{{ $action ?? route('premium.requests.store') }}">
       @csrf
 
       <div class="modal-header">
         <div>
-          <h5 class="modal-title">Upgrade to Premium</h5>
-          <div class="text-muted small">Select your region, then submit your transfer details.</div>
+          <h5 class="modal-title">{{ __('premium.upgrade_title') }}</h5>
+          <div class="text-muted small">{{ __('premium.subtitle') }}</div>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ __('premium.close') }}"></button>
       </div>
 
       <div class="modal-body">
         <div class="row g-3">
-          {{-- Left: Region & Receiving info --}}
+          {{-- Left: Receiving info (Jordan / CliQ only) --}}
           <div class="col-md-5">
             <div class="border rounded-4 p-3 h-100 subscribe-side">
               <div class="alert alert-secondary small mb-3">
-                Please complete the payment, then fill the form. Use the note format: <code>premium - {{ $prefill['account_name'] }}</code>
+                {{-- after_sending_note supports :account variable --}}
+                {!! __('premium.after_sending_note', ['account' => e($prefill['account_name'])]) !!}
+              </div>
+              <div class="alert alert-secondary small mb-3">
+                {{ __('premium.activate_within') }}
               </div>
 
-              <div class="mb-2">
-                <label class="form-label fw-semibold">Your location</label>
-                <div class="d-flex flex-wrap gap-3">
-                  <label class="form-check m-0">
-                    <input class="form-check-input" type="radio" name="where" value="jordan" required>
-                    <span class="form-check-label">Inside Jordan</span>
-                  </label>
-                  <label class="form-check m-0">
-                    <input class="form-check-input" type="radio" name="where" value="intl" required>
-                    <span class="form-check-label">Outside Jordan</span>
-                  </label>
+              <div class="border rounded p-3 mb-2">
+                <div class="small mb-2 fw-semibold">{{ __('premium.inside_jordan') }}</div>
+                <div class="small">{{ __('premium.cliq_alias') }}: <b>{{ $config['cliq_alias'] }}</b></div>
+                <div class="small">{{ __('premium.amount') }}: <b>{{ $config['price_local'] }}</b></div>
+                <div class="small">
+                  {{ __('premium.transfer_note') }}:
+                  <code>{{ __('premium.premium_ref_prefix', ['account' => $prefill['account_name']]) }}</code>
                 </div>
               </div>
 
-              <div id="receivingJordan" class="border rounded p-3 mb-3 d-none">
-                <div class="small mb-2 fw-semibold">Receiving details (Jordan / CliQ)</div>
-                <div class="small">CliQ Alias: <b>{{ $config['cliq_alias'] }}</b></div>
-                <div class="small">Amount: <b>{{ $config['price_local'] }}</b></div>
-                <div class="small">Transfer note: <code>premium - {{ $prefill['account_name'] }}</code></div>
-              </div>
-
-              <div id="receivingIntl" class="border rounded p-3 mb-3 d-none">
-                <div class="small mb-2 fw-semibold">Receiving details (Outside Jordan / PayPal)</div>
-                <div class="small">PayPal: <a href="{{ $config['paypal_link'] }}" target="_blank" rel="noopener" class="text-decoration-underline">{{ $config['paypal_link'] }}</a></div>
-                <div class="small">Amount: <b>{{ $config['price_intl'] }}</b></div>
-                <div class="small">Transfer note: <code>premium - {{ $prefill['account_name'] }}</code></div>
+              <div class="border rounded p-3 mb-2">
+                <a href="https://maharathub.gumroad.com/l/Maharathubpremuim"
+                   target="_blank"
+                   rel="noopener"
+                   class="btn btn-outline-primary w-100">
+                  {{ __('premium.pay_with_card') }}
+                </a>
               </div>
             </div>
           </div>
@@ -98,46 +90,61 @@
           {{-- Right: Transfer form --}}
           <div class="col-md-7">
             <div class="border rounded-4 p-3 h-100" style="padding:.9rem!important">
-              <div id="fieldWallet" class="mb-3 d-none">
-                <label class="form-label">Your CliQ name (sender)</label>
-                <input type="text" class="form-control form-control-sm" name="sender_wallet_name" placeholder="Your name on CliQ">
+              <div class="mb-3">
+                <label class="form-label">{{ __('premium.sender_wallet_name_label') }}</label>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       name="sender_wallet_name"
+                       placeholder="{{ __('premium.sender_wallet_name_ph') }}"
+                       required>
               </div>
 
-              <div id="fieldPaypal" class="mb-3 d-none">
-                <label class="form-label">Your PayPal email (sender)</label>
-                <input type="email" class="form-control form-control-sm" name="sender_paypal_email" placeholder="example@domain.com">
+              {{-- أدخلنا الحساب كمخفي حتى يبقى المرجع يعمل --}}
+              <input type="hidden" id="siteAccountName" name="site_account_name" value="{{ $prefill['account_name'] }}">
+
+              <div class="mb-3">
+                <label class="form-label">{{ __('premium.txid_label') }}</label>
+                <input type="text"
+                       class="form-control form-control-sm"
+                       id="txid"
+                       name="txid"
+                       placeholder="{{ __('premium.txid_ph') }}"
+                       required>
               </div>
 
               <div class="mb-3">
-                <label class="form-label">Your site account name</label>
-                <input type="text" class="form-control form-control-sm" id="siteAccountName" name="site_account_name" value="{{ $prefill['account_name'] }}" placeholder="your_account" required>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Transaction ID</label>
-                <input type="text" class="form-control form-control-sm" id="txid" name="txid" placeholder="9F3XZ1..." required>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label">Notification email</label>
-                <input type="email" class="form-control form-control-sm" id="email" name="email" value="{{ $prefill['email'] }}" required>
+                <label class="form-label">{{ __('premium.email_label') }}</label>
+                <input type="email"
+                       class="form-control form-control-sm"
+                       id="email"
+                       name="email"
+                       value="{{ $prefill['email'] }}"
+                       placeholder="{{ __('premium.email_ph') }}"
+                       required>
               </div>
 
               <div class="mb-2">
-                <label class="form-label">Note (optional)</label>
-                <textarea class="form-control form-control-sm" name="note" rows="2" placeholder="Any transfer details..."></textarea>
+                <label class="form-label">{{ __('premium.note_label') }}</label>
+                <textarea class="form-control form-control-sm"
+                          name="note"
+                          rows="2"
+                          placeholder="{{ __('premium.note_ph') }}"></textarea>
               </div>
 
-              <input type="hidden" id="provider" name="provider" value="">
+              <input type="hidden" id="provider" name="provider" value="cliq">
               <input type="hidden" id="reference" name="reference" value="">
             </div>
           </div>
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="submit" id="subscribeSendBtn" class="btn btn-primary">Transferred — Send request</button>
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+      <div class="modal-footer {{ $isRtl ? 'justify-content-start' : '' }}">
+        <button type="submit" id="subscribeSendBtn" class="btn btn-primary">
+          {{ __('premium.send_request_btn') }}
+        </button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          {{ __('premium.cancel') }}
+        </button>
       </div>
     </form>
   </div>
@@ -145,7 +152,6 @@
 
 @push('styles')
 <style>
-  /* minor visual enhancement */
   .subscribe-side{ background:#fbfbfd; }
   @media (max-width: 767.98px){
     .modal .rounded-4{ border-radius: .75rem !important; }
@@ -159,41 +165,51 @@
   const modal = document.getElementById(@json($modalId));
   if(!modal) return;
 
-  function toggleByWhere(where){
-    const jBox = modal.querySelector('#receivingJordan');
-    const iBox = modal.querySelector('#receivingIntl');
-    const wFld = modal.querySelector('#fieldWallet');
-    const pFld = modal.querySelector('#fieldPaypal');
-    const provider = modal.querySelector('#provider');
+  // نمرّر سلاسل مترجمة للـJS عبر data-attributes
+  modal.dataset.i18nProcessing = @json(__('premium.processing'));
+  modal.dataset.i18nReqOkTitle = @json(__('premium.req_ok_title'));
+  modal.dataset.i18nReqOkText  = @json(__('premium.req_ok_text'));
+  modal.dataset.i18nErrTitle   = @json(__('premium.error_title'));
+  modal.dataset.i18nFailed     = @json(__('premium.failed_generic'));
 
-    const isJordan = where === 'jordan';
-    jBox?.classList.toggle('d-none', !isJordan);
-    iBox?.classList.toggle('d-none',  isJordan);
-    wFld?.classList.toggle('d-none', !isJordan);
-    pFld?.classList.toggle('d-none',  isJordan);
+  modal.addEventListener('submit', async function(e){
+    const form = e.target.closest('form');
+    if(!form) return;
+    e.preventDefault();
 
-    // toggle required
-    const wInput = modal.querySelector('[name="sender_wallet_name"]');
-    const pInput = modal.querySelector('[name="sender_paypal_email"]');
-    if (wInput) { isJordan ? wInput.setAttribute('required', 'required') : wInput.removeAttribute('required'); }
-    if (pInput) { !isJordan ? pInput.setAttribute('required', 'required') : pInput.removeAttribute('required'); }
+    // Set "reference" like: premium - <account>
+    const acct = form.querySelector('#siteAccountName')?.value?.trim() || '';
+    const ref  = form.querySelector('#reference');
+    if (ref) ref.value = @json(__('premium.premium_ref_prefix', ['account' => ':account'])).replace(':account', acct);
 
-    if(provider) provider.value = isJordan ? 'cliq' : 'paypal';
-  }
-
-  modal.addEventListener('shown.bs.modal', ()=>{
-    const checked = modal.querySelector('input[name="where"]:checked');
-    if (!checked){
-      const def = modal.querySelector('input[name="where"][value="jordan"]');
-      if (def){ def.checked = true; toggleByWhere('jordan'); }
-    } else {
-      toggleByWhere(checked.value);
+    const btn = form.querySelector('#subscribeSendBtn');
+    const old = btn?.innerHTML;
+    if(btn){
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> ' + (modal.dataset.i18nProcessing || 'Processing…');
     }
-  });
 
-  modal.addEventListener('change', (e)=>{
-    if(e.target && e.target.name === 'where'){
-      toggleByWhere(e.target.value);
+    try{
+      const action = form.getAttribute('action');
+      const res = await fetch(action, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With':'XMLHttpRequest',
+          'X-CSRF-TOKEN': form.querySelector('input[name="_token"]').value,
+          'Accept':'application/json'
+        },
+        body: new FormData(form)
+      });
+      let data = {}; try { data = await res.json(); } catch {}
+      if(!res.ok || !data.success) throw data?.error || data?.message || (data?.errors && Object.values(data.errors).flat().join('\n')) || (modal.dataset.i18nFailed || 'Failed');
+
+      if(window.Swal) Swal.fire({icon:'success', title: modal.dataset.i18nReqOkTitle, text: modal.dataset.i18nReqOkText, timer:2200, showConfirmButton:false});
+      (bootstrap.Modal.getInstance(modal) || new bootstrap.Modal('#'+modal.id)).hide();
+      form.reset();
+    }catch(err){
+      if(window.Swal) Swal.fire({icon:'error', title: modal.dataset.i18nErrTitle, text:String(err||modal.dataset.i18nFailed)});
+    }finally{
+      if(btn){ btn.disabled = false; btn.innerHTML = old; }
     }
   });
 })();

@@ -24,6 +24,9 @@ use App\Events\ChatMessageSent;
 use App\Http\Controllers\ReviewController as UserReviewController;
 use App\Http\Controllers\PremiumRequestController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Admin\PremiumRequestController as AdminPremiumRequestController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -36,14 +39,18 @@ Route::get('/lang/{locale}', function (string $locale) {
     return back();
 })->name('lang.switch');
 
+// لوحة المستخدم العامة (محميّة)
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-
+/* ============================
+|  لوحة تحكم المسؤول (admin)
+|=============================*/
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+   
+    // ⚠️ بدون /admin هنا لأننا أصلاً داخل prefix('admin')
     Route::post('/filter/country', [DashboardController::class, 'getUserCountByCountry'])->name('filter.country');
     Route::post('/filter/gender',  [DashboardController::class, 'getUserCountByGender'])->name('filter.gender');
 
@@ -72,10 +79,34 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 });
 
 
+Route::prefix('admin')->name('admin.')->middleware(['auth','admin'])->group(function () {
+    Route::get('/premium-requests', [\App\Http\Controllers\Admin\PremiumRequestController::class, 'index'])
+        ->name('premium-requests.index');
 
+    // ✅ خلّي الباراميتر {id} مش {premiumRequest}
+    Route::post('premium-requests/{id}/approve', [AdminPremiumRequestController::class, 'approve'])
+        ->name('premium-requests.approve');
+
+    Route::post('premium-requests/{id}/reject', [AdminPremiumRequestController::class, 'reject'])
+        ->name('premium-requests.reject');
+
+    Route::delete('premium-requests/{id}', [AdminPremiumRequestController::class, 'destroy'])
+        ->name('premium-requests.destroy');
+        
+        
+    // بنفس الكنترولر
+    Route::post('/premium-requests/users/{user}/premium', [\App\Http\Controllers\Admin\PremiumRequestController::class, 'setPremium'])
+        ->name('premium-requests.users.premium.set');
+    Route::delete('/premium-requests/users/{user}/premium', [\App\Http\Controllers\Admin\PremiumRequestController::class, 'unsetPremium'])
+        ->name('premium-requests.users.premium.unset');
+
+});
+/* ============================
+|  صفحات الموقع العامة
+|=============================*/
 Route::controller(ThemeController::class)->name('theme.')->group(function () {
     Route::get('/', 'index')->name('index');
-    Route::get('/skills', 'skills')->name('skills'); 
+    Route::get('/skills', 'skills')->name('skills'); // نفس المنطق
     Route::get('/about', 'about')->name('about');
     Route::get('/contact', 'contact')->name('contact');
     Route::get('/privacyPolicy', 'privacyPolicy')->name('privacyPolicy');
@@ -83,17 +114,21 @@ Route::controller(ThemeController::class)->name('theme.')->group(function () {
     Route::get('/profile/{user}', 'showProfile')->name('profile.show');
 });
 
+// نموذج التواصل (POST)
 Route::post('/contact', [ContactController::class, 'submit'])->name('contact.submit');
 // routes/web.php
 Route::post('/premium/requests', [PremiumRequestController::class, 'store'])
     ->name('premium.requests.store')
     ->middleware('auth');
 
-
+/* ============================
+|  مسارات المستخدم (بعد تسجيل الدخول)
+|=============================*/
 Route::middleware('auth')->group(function () {
     Route::get('/premium', [\App\Http\Controllers\PremiumController::class, 'show'])->name('premium.show');
 
-    Route::get('/myProfile', [ProfileController::class, 'myProfile'])->name('myProfile'); 
+    // ملف المستخدم (العادي) — استخدم ProfileController (وليس Admin)
+    Route::get('/myProfile', [ProfileController::class, 'myProfile'])->name('myProfile'); // ← أبقينا نسخة واحدة فقط
 
     Route::get('/profile',  [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -103,9 +138,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/remove-image', [ProfileController::class, 'removeImage'])->name('profile.remove-image');
     Route::put('/profile/qualifications', [ProfileController::class, 'updateQualifications'])->name('profile.update-qualifications');
 
+    // API صغيرة للـ Skills/Languages
     Route::get('/api/skills', [ProfileController::class, 'getSkills'])->name('api.skills');
     Route::get('/api/languages', [ProfileController::class, 'getLanguages'])->name('api.languages');
 
+    // الدعوات
     Route::get('/invitations', [InvitationController::class, 'index'])->name('invitations.index');
     Route::post('/invitations/send', [InvitationController::class, 'send'])->name('invitations.send');
     Route::post('/invitations/{invitation}/reply', [InvitationController::class, 'reply'])->name('invitations.reply');
@@ -114,18 +151,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/exchanges', [InvitationController::class, 'exchanges'])->name('exchanges.index');
 
     
+    // OneSignal
     Route::post('/onesignal/update', function (\Illuminate\Http\Request $request) {
         $user = \App\Models\User::findOrFail(auth()->id());
         $user->update(['onesignal_player_id' => $request->player_id]);
         return response()->json(['message' => 'Player ID updated']);
     })->name('onesignal.update');
 
+    // عدّاد الدعوات
     Route::get('/invitations/count', function () {
         $count = \App\Models\Invitation::where('destination_user_id', auth()->id())
             ->whereNull('reply')->count();
         return response()->json(['count' => $count]);
     });
 
+    // المحادثات
     Route::prefix('conversations')->name('conversations.')->group(function () {
         Route::get('/', [ConversationController::class, 'index'])->name('index');
         Route::get('/create', [ConversationController::class, 'create'])->name('create');
@@ -136,6 +176,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/{conversation}/review', [ConversationController::class, 'storeReview'])->name('review.store');
     });
 });
+// routes/web.php
+Route::view('/learning-requests', 'theme.learning_requests')->name('theme.learning_requests');
+Route::view('/gamification', 'theme.gamification')->name('theme.gamification');
 
 
 Route::middleware('auth')->group(function () {
@@ -153,6 +196,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/invitations/unread-count', [InvitationController::class, 'unreadCount'])
         ->name('invitations.unreadCount');
 });
+// routes/web.php
 
 Route::middleware('auth')->group(function () {
     Route::get('/notifications/counts', [NotificationController::class, 'counts'])
@@ -169,22 +213,27 @@ Route::middleware('auth')->group(function () {
             Route::delete('{review}',      [UserReviewController::class, 'destroy'])->name('destroy');
         });
 });
-
+// routes/web.php
 
 Route::middleware('auth')->get('/test-broadcast/{conv}', function (Conversation $conv) {
+    // أنشئ رسالة تجريبية داخل هذه المحادثة
     $msg = $conv->messages()->create([
         'user_id' => auth()->id(),
         'body'    => 'Ping test @ ' . now()->toTimeString(),
     ]);
 
-    event(new ChatMessageSent($msg));
+    // بثّها فورًا
+    event(new ChatMessageSent($msg)); // أو broadcast(new ChatMessageSent($msg))->toOthers();
+
     return response()->json(['ok' => true, 'conv_id' => $conv->id, 'msg_id' => $msg->id]);
 });
 
-
+// ⚠️ لا تعرّف /logout لو تستخدم Breeze/Jetstream (هما بيوفّروا POST /logout باسم route: logout)
+// إن كنت تحتاج روت مخصّص، غيّر الاسم:
 # Route::post('/logout', function () {
 #     Auth::logout();
 #     return redirect('/login');
 # })->name('auth.custom-logout');
 
+// مصادقة Breeze/Jetstream
 require __DIR__ . '/auth.php';

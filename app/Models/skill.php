@@ -1,5 +1,6 @@
 <?php
 
+// app/Models/Skill.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -31,6 +32,7 @@ class Skill extends Model
         return $this->hasMany(Exchange::class, 'skill_id');
     }
 
+    /* سكوبات مساعدة */
     public function scopeWhereNameLike($q, string $term, ?string $locale = null)
     {
         $locale = $locale ?? app()->getLocale();

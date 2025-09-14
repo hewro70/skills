@@ -5,6 +5,7 @@
     <title>لوحة تحكم المسؤول</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <style>
+        /* الخطوط والألوان */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
@@ -13,6 +14,7 @@
             overflow: hidden;
         }
 
+        /* الشريط الجانبي */
         #sidebar {
             width: 25%;
             background: #212529;
@@ -78,6 +80,7 @@
             padding-top: 1rem;
         }
 
+        /* محتوى الصفحة */
         #content {
             flex-grow: 1;
             padding: 2.5rem 3rem;
@@ -101,6 +104,7 @@
             background: #adb5bd;
         }
 
+        /* شريط التنقل الأعلى */
         nav.navbar {
             background-color: #212529;
             padding: 0.65rem 1rem;

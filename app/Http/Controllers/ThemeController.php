@@ -15,37 +15,50 @@ class ThemeController extends Controller
 {
     [$users, $skills, $classifications, $countries, $popularSkills] = $this->loadData($request);
 
-    if ($request->ajax() || $request->boolean('partial')) {
-        $usersHtml = view('theme.partials.users_grid', ['users' => $users])->render();
+   if ($request->ajax() || $request->boolean('partial')) {
+    $usersHtml = view('theme.partials.users_grid', ['users' => $users])->render();
 
-        $baseQuery = $request->except(['partial','page']);
+    $baseQuery = $request->except(['partial','page']);
 
-        $paginationHtml = $users
-            ->appends($baseQuery)
-            ->links('pagination::bootstrap-5')
-            ->toHtml();
+    $paginationHtml = $users
+        ->appends($baseQuery)
+        ->links('pagination::bootstrap-5')
+        ->toHtml();
 
-        $chipsHtml = view('theme.partials.active_chips', [
-            'countries' => $countries,
-            'classifications' => $classifications
-        ])->render();
+    $chipsHtml = view('theme.partials.active_chips', [
+        'countries' => $countries,
+        'classifications' => $classifications
+    ])->render();
 
-        $total = method_exists($users,'total') ? $users->total() : (is_countable($users) ? count($users) : 0);
+    $total = method_exists($users,'total') ? $users->total() : (is_countable($users) ? count($users) : 0);
 
-        $cleanUrl = url()->current();
-        if (!empty($baseQuery)) $cleanUrl .= '?'.http_build_query($baseQuery);
-        $currentPage = method_exists($users,'currentPage') ? $users->currentPage() : (int)$request->query('page',1);
-        $finalUrl = $cleanUrl.(str_contains($cleanUrl,'?') ? '&' : '?').'page='.$currentPage;
-
-        return response()->json([
-            'ok'              => true,
-            'users_html'      => $usersHtml,
-            'pagination_html' => $paginationHtml,
-            'chips_html'      => $chipsHtml,
-            'total'           => $total,
-            'url'             => $finalUrl,
-        ]);
+    // ===== URL النظيفة حسب الفلاتر الحالية =====
+    $cleanUrl = url()->current();
+    if (!empty($baseQuery)) {
+        $cleanUrl .= '?'.http_build_query($baseQuery);
     }
+
+    $currentPage = (int) (method_exists($users,'currentPage') ? $users->currentPage() : $request->query('page',1));
+    $lastPage    = (int) (method_exists($users,'lastPage')    ? $users->lastPage()    : 1);
+
+    // لو الصفحة الحالية خارج المدى، صحّحها
+    if ($currentPage > $lastPage) {
+        $currentPage = max(1, $lastPage);
+    }
+
+    // اضف page للـ URL النهائي
+    $finalUrl = $cleanUrl.(str_contains($cleanUrl,'?') ? '&' : '?').'page='.$currentPage;
+
+    return response()->json([
+        'ok'              => true,
+        'users_html'      => $usersHtml,
+        'pagination_html' => $paginationHtml,
+        'chips_html'      => $chipsHtml,
+        'total'           => $total,
+        'url'             => $finalUrl, // الفرونت يستخدمه ليحدّث العنوان (push/replaceState)
+    ]);
+}
+
 
     return view('theme.index', compact('users','skills','classifications','countries','popularSkills'));
 }
@@ -54,36 +67,48 @@ public function skills(Request $request)
     [$users, $skills, $classifications, $countries, $popularSkills] = $this->loadData($request);
 
     if ($request->ajax() || $request->boolean('partial')) {
-        $usersHtml = view('theme.partials.users_grid', ['users' => $users])->render();
+    $usersHtml = view('theme.partials.users_grid', ['users' => $users])->render();
 
-        $baseQuery = $request->except(['partial','page']);
+    $baseQuery = $request->except(['partial','page']);
 
-        $paginationHtml = $users
-            ->appends($baseQuery)
-            ->links('pagination::bootstrap-5')
-            ->toHtml();
+    $paginationHtml = $users
+        ->appends($baseQuery)
+        ->links('pagination::bootstrap-5')
+        ->toHtml();
 
-        $chipsHtml = view('theme.partials.active_chips', [
-            'countries' => $countries,
-            'classifications' => $classifications
-        ])->render();
+    $chipsHtml = view('theme.partials.active_chips', [
+        'countries' => $countries,
+        'classifications' => $classifications
+    ])->render();
 
-        $total = method_exists($users,'total') ? $users->total() : (is_countable($users) ? count($users) : 0);
+    $total = method_exists($users,'total') ? $users->total() : (is_countable($users) ? count($users) : 0);
 
-        $cleanUrl = url()->current();
-        if (!empty($baseQuery)) $cleanUrl .= '?'.http_build_query($baseQuery);
-        $currentPage = method_exists($users,'currentPage') ? $users->currentPage() : (int)$request->query('page',1);
-        $finalUrl = $cleanUrl.(str_contains($cleanUrl,'?') ? '&' : '?').'page='.$currentPage;
-
-        return response()->json([
-            'ok'              => true,
-            'users_html'      => $usersHtml,
-            'pagination_html' => $paginationHtml,
-            'chips_html'      => $chipsHtml,
-            'total'           => $total,
-            'url'             => $finalUrl,
-        ]);
+    // ===== URL النظيفة حسب الفلاتر الحالية =====
+    $cleanUrl = url()->current();
+    if (!empty($baseQuery)) {
+        $cleanUrl .= '?'.http_build_query($baseQuery);
     }
+
+    $currentPage = (int) (method_exists($users,'currentPage') ? $users->currentPage() : $request->query('page',1));
+    $lastPage    = (int) (method_exists($users,'lastPage')    ? $users->lastPage()    : 1);
+
+    // لو الصفحة الحالية خارج المدى، صحّحها
+    if ($currentPage > $lastPage) {
+        $currentPage = max(1, $lastPage);
+    }
+
+    // اضف page للـ URL النهائي
+    $finalUrl = $cleanUrl.(str_contains($cleanUrl,'?') ? '&' : '?').'page='.$currentPage;
+
+    return response()->json([
+        'ok'              => true,
+        'users_html'      => $usersHtml,
+        'pagination_html' => $paginationHtml,
+        'chips_html'      => $chipsHtml,
+        'total'           => $total,
+        'url'             => $finalUrl, // الفرونت يستخدمه ليحدّث العنوان (push/replaceState)
+    ]);
+}
 
     return view('theme.skills', compact('users','skills','classifications','countries','popularSkills'));
 }

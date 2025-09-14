@@ -15,6 +15,36 @@
   "lang.ar": "Arabic",
   "lang.en": "English",
   
+  "mail.user": "User",
+
+  "mail.invitation.created.title": "You've received a new invitation",
+  "mail.invitation.created.body": "Hello :receiver, :sender has sent you an invitation on :brand.",
+  "mail.invitation.created.subject": "New invitation from :name",
+  "mail.invitation.message": "Message",
+  "mail.invitation.view_site": "Go to website",
+  "mail.invitation.footer": "Thanks for using :brand.",
+
+  "mail.invitation.sender.accepted_subject": "Your invitation was accepted",
+  "mail.invitation.sender.rejected_subject": "Your invitation was rejected",
+  "mail.invitation.receiver.accepted_subject": "You accepted the invitation",
+  "mail.invitation.receiver.rejected_subject": "You rejected the invitation",
+
+  "mail.invitation.sender.accepted_title": "Your invitation was accepted 🎉",
+  "mail.invitation.sender.rejected_title": "Your invitation was rejected",
+  "mail.invitation.receiver.accepted_title": "You accepted the invitation",
+  "mail.invitation.receiver.rejected_title": "You rejected the invitation",
+
+  "mail.invitation.sender.accepted_body": "Good news! :receiver has accepted your invitation.",
+  "mail.invitation.sender.rejected_body": ":receiver has rejected your invitation.",
+  "mail.invitation.receiver.accepted_body": "You accepted :sender's invitation.",
+  "mail.invitation.receiver.rejected_body": "You rejected :sender's invitation.",
+   "mail.chat.new_message_subject": "New message from :name",
+  "mail.chat.new_message_title": "You have a new message",
+  "mail.chat.new_message_body": "You received a new message from :sender on :brand.",
+  "mail.chat.open_conversation": "Open conversation",
+
+  "mail.invitation.open_chat": "Open conversation",
+  "mail.invitation.visit_site": "Visit website",
   "home.hero.bg_alt": "Maharat Hub background",
   "home.hero.badge": "Maharat Hub · Skill Exchange Community",
   "home.hero.title": "Share your skills and make a difference",
@@ -36,6 +66,8 @@
   "common.search": "Search",
     "notifications.new_messages": "New message",
   "notifications.new_invitations": "New Invitation",
+  "nav.learning_requests":"Learning Requests",
+  "nav.gamification":"Gamification",
 
   "filters.title": "Filters",
   "filters.reset": "Reset",
@@ -57,7 +89,7 @@
   "results.sort.newest": "Newest",
   "results.sort.top_rated": "Top rated",
 
-
+"profile.teachable_skills.table.level":"level",
 
   "footer.brand": "Maharat Hub",
 
@@ -102,7 +134,8 @@
 
   "profile.skills.title": "My skills",
   "profile.skills.empty": "No skills selected",
-
+  "profile.teachable_skills.table.skill": "Skill",
+    "profile.teachable_skills.table.description": "Description",
   "profile.languages.title": "My languages",
   "profile.languages.empty": "No languages selected",
   "profile.languages.level": "Level",
@@ -392,7 +425,7 @@
   "profile.local_time": "local time",
   "premium.go_premium": "Get Premium",
   "profile.i_am_mentor": "I am a mentor",
-  "profile.i_am_mentor_help": "Check this if you want to teach your skills to others.",
+  "profile.i_am_mentor_help": "When enabled, you’re open to teaching others without requesting a skill in return.",
   "profile.role.mentor": "Mentor",
   "profile.accepted": "accepted",
   "profile.rejected": "rejected",

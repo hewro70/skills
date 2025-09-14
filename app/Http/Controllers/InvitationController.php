@@ -7,6 +7,12 @@ use App\Models\Conversation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Mail\InvitationStatusMail;
+use App\Mail\InvitationCreatedMail;
+
+
 
 class InvitationController extends Controller
 {
@@ -14,6 +20,7 @@ class InvitationController extends Controller
     {
         $user = $request->user();
 
+        // دعوات واردة فقط (حسب السيناريو الجديد ما عندنا صفحات Exchanges)
         $invitations = Invitation::with('sourceUser')
             ->where('destination_user_id', $user->id)
             ->latest()
@@ -24,9 +31,10 @@ class InvitationController extends Controller
         ]);
     }
 
+    // 🔕 تعطيل أي صفحة Exchanges قديمة:
     public function exchanges(Request $request)
     {
-        abort(404);
+        abort(404); // أو رجّع View فارغ مع تنبيه أنها Disabled حسب الخطة الجديدة
     }
 
     public function unreadCount(Request $request)
@@ -38,7 +46,7 @@ class InvitationController extends Controller
         return response()->json(['count' => $count]);
     }
 
-  public function send(Request $request)
+ public function send(Request $request)
 {
     $request->validate([
         'destination_user_id' => 'required|exists:users,id',
@@ -53,6 +61,7 @@ class InvitationController extends Controller
         return response()->json(['message' => __('errors.invite_self')], 422);
     }
 
+    // ممنوع لو في محادثة قائمة
     $hasConversation = Conversation::whereHas('users', fn($q) => $q->where('users.id', $user->id))
         ->whereHas('users', fn($q) => $q->where('users.id', $destinationId))
         ->exists();
@@ -60,6 +69,7 @@ class InvitationController extends Controller
         return response()->json(['message' => __('invitations.errors.already_connected')], 422);
     }
 
+    // موجود Pending باتجاهين؟
     $existsPending = Invitation::whereNull('reply')
         ->where(function ($q) use ($user, $destinationId) {
             $q->where(function ($q2) use ($user, $destinationId) {
@@ -74,10 +84,12 @@ class InvitationController extends Controller
         return response()->json(['message' => __('invitations.errors.pending_exists')], 422);
     }
 
+    // بريميوم؟
     $isPremium = method_exists($user, 'hasActiveSubscription')
         ? $user->hasActiveSubscription()
         : (bool) ($user->is_premium ?? false);
 
+    // حد 5/شهر للمجاني
     if (!$isPremium) {
         $sentThisMonth = Invitation::where('source_user_id', $user->id)
             ->where('created_at', '>=', now()->startOfMonth())
@@ -87,6 +99,7 @@ class InvitationController extends Controller
         }
     }
 
+    // رسالة مخصّصة للبريميوم فقط
     $customMessage = $isPremium ? (trim((string)$request->message) ?: null) : null;
 
     try {
@@ -94,13 +107,35 @@ class InvitationController extends Controller
             'source_user_id'      => $user->id,
             'destination_user_id' => $destinationId,
             'date_time'           => now(),
-            'message'             => $customMessage, 
+            'message'             => $customMessage, // null للـ Free
         ]);
 
-        $systemMessage = __('invitations.free.system_notice', ['name' => $user->fullName()]);
-        $textForReceiver = $customMessage ?: $systemMessage;
+        // جهّز العلاقات للإيميل
+        $invitation->loadMissing(['sourceUser','destinationUser']);
 
- 
+        // ===== إرسال الإيميل عند الإرسال (send) =====
+        try {
+            // إلى المستلم
+            $receiverEmail = $invitation->destinationUser?->email;
+            if ($receiverEmail) {
+                Mail::to($receiverEmail)->send(new InvitationCreatedMail($invitation));
+            }
+
+            // (اختياري) تأكيد للمرسِل
+            // $senderEmail = $invitation->sourceUser?->email;
+            // if ($senderEmail && $senderEmail !== $receiverEmail) {
+            //     Mail::to($senderEmail)->send(new InvitationCreatedMail($invitation));
+            // }
+        } catch (\Throwable $e) {
+            Log::error('Invitation created mail failed', [
+                'invitation_id' => $invitation->id,
+                'error' => $e->getMessage(),
+            ]);
+            // نكمّل عادي بدون إفشال الطلب
+        }
+
+        // إشعار/إيفنتاتك إن حابب تظل موجودة
+        // Notification::send($invitation->destinationUser, new InvitationCreatedNotification($invitation, $textForReceiver));
         event(new \App\Events\InvitationSent($invitation));
 
         return response()->json(['message' => __('invitations.sent_success')]);
@@ -110,29 +145,73 @@ class InvitationController extends Controller
 }
 
 
+
   public function reply(Request $request, Invitation $invitation)
 {
     $request->validate([
-        'reply' => 'required|in:قبول,رفض', 
+        'reply' => 'required|string'
     ]);
 
     if ($invitation->destination_user_id !== auth()->id()) {
         return response()->json(['message' => __('errors.unauthorized')], 403);
     }
 
-    if ($request->reply === 'قبول') {
-        $invitation->update(['reply' => 'قبول']);
+    $raw = trim(mb_strtolower($request->reply));
+    $map = [
+        'accept'=>'accepted','accepted'=>'accepted','approve'=>'accepted',
+        'قبول'=>'accepted','موافقة'=>'accepted',
+        'reject'=>'rejected','rejected'=>'rejected','declined'=>'rejected',
+        'رفض'=>'rejected','مرفوض'=>'rejected',
+    ];
+    $norm = $map[$raw] ?? null;
+    if (!$norm) {
+        return response()->json(['message' => 'قيمة غير صالحة للحقل reply'], 422);
+    }
 
+    $dbValue = $norm === 'accepted' ? 'قبول' : 'رفض';
+    $invitation->reply = $dbValue;
+    $invitation->save();
+
+    // 🔄 مهم: حدّث الريكورد من الداتابيس بعد الحفظ
+    $invitation->refresh();
+
+    // 🔗 حمّل العلاقات بعد التحديث
+    $invitation->loadMissing(['sourceUser','destinationUser']);
+
+    // try {
+    //     $senderEmail   = $invitation->sourceUser?->email;
+    //     $receiverEmail = $invitation->destinationUser?->email;
+
+    //     if ($senderEmail) {
+    //         Mail::to($senderEmail)->send(new InvitationStatusMail($invitation, 'sender'));
+    //     }
+    //     if ($receiverEmail && $receiverEmail !== $senderEmail) {
+    //         Mail::to($receiverEmail)->send(new InvitationStatusMail($invitation, 'receiver'));
+    //     }
+    // } catch (\Throwable $e) {
+    //     Log::error('Invitation reply mail failed', [
+    //         'invitation_id' => $invitation->id,
+    //         'reply'         => $dbValue,
+    //         'error'         => $e->getMessage(),
+    //     ]);
+    // }
+
+    $convId = null;
+    if ($norm === 'accepted') {
         $sender   = User::findOrFail($invitation->source_user_id);
         $receiver = User::findOrFail($invitation->destination_user_id);
         $convId   = $this->findOrCreateConversation($sender, $receiver);
-
-        return response()->json(['message' => __('invitations.accepted'), 'conversation_id' => $convId]);
     }
 
-    $invitation->delete();
-    return response()->json(['message' => __('invitations.declined_deleted')]);
+    return response()->json([
+        'message'         => $norm === 'accepted'
+            ? __('invitations.accepted')
+            : __('invitations.declined'),
+        'conversation_id' => $norm === 'accepted' ? $convId : null,
+    ]);
 }
+
+
 
 protected function findOrCreateConversation(User $a, User $b): int
 {

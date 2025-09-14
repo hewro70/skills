@@ -297,6 +297,44 @@
     }
     .loading .spinner{display:inline-block}
     @keyframes spin{to{transform:rotate(360deg)}}
+    
+    
+    /* اسمح باللفّ تحت XL لتفادي التمرير الأفقي */
+@media (max-width:1199.98px){
+  .header .headerbar{ flex-wrap: wrap; }
+}
+
+/* خفّف الـ nowrap والبادينغ على الشاشات المتوسطة/الصغيرة */
+@media (max-width:1399.98px){
+  .desktop-nav .nav-link,
+  .pill-link{ white-space: normal; }
+  .desktop-nav .nav-link{ padding:0 .45rem !important; }
+  .pill-link{ padding:0 .5rem; }
+}
+
+/* خلي قائمة الموبايل تتنفس بدل 420px */
+#navmenu{ overflow:hidden; transition:max-height .3s ease, padding .3s ease; max-height:0; }
+#navmenu.show{ max-height:80vh; padding:.6rem 0; }
+
+/* تصغير المين-ويدث للدرُوبداون على شاشات أصغر من 360px */
+@media (max-width:360px){
+  .notif-menu{ min-width:260px !important; }
+}
+
+/* ساعد التراص داخل شريط الهيدر */
+.header .auth-section,
+.header .desktop-nav{ min-width:0; }                 /* يسمح بالانكماش */
+.header .auth-section .text-truncate{ max-width:120px; }
+
+/* منع أي انزياح أفقي (إجراء وقائي) */
+html, body { overflow-x: hidden; }
+.btn-search{
+  border-radius: 999px !important; /* بدل 25% */
+}
+@media (max-width: 768px){
+  .hero-search{ grid-template-columns: 1fr; border-radius: 20px; }
+}
+
   </style>
 
   <script>

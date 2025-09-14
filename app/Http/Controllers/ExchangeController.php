@@ -1,4 +1,5 @@
 <?php
+// app/Http/Controllers/ExchangeController.php
 namespace App\Http\Controllers;
 
 use App\Models\Conversation;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ExchangeController extends Controller
 {
+  // app/Http/Controllers/ExchangeController.php
 
 public function store(Request $req, Conversation $conversation)
 {
@@ -30,11 +32,13 @@ public function store(Request $req, Conversation $conversation)
         abort(403);
     }
 
+    // تأكد أن المهارة الأولى تخص المرسل
     $senderOwns = DB::table('user_skills')
         ->where('user_id', $senderId)
         ->where('skill_id', $req->sender_skill_id)
         ->exists();
 
+    // تأكد أن المهارة الثانية تخص المستلم
     $receiverOwns = DB::table('user_skills')
         ->where('user_id', $receiverId)
         ->where('skill_id', $req->receiver_skill_id)
@@ -54,6 +58,7 @@ public function store(Request $req, Conversation $conversation)
         abort(422, 'المهارة المختارة لا تخص الطرف الآخر.');
     }
 
+   // ================== سقف الطلبات قبل الإنشاء (لغير البريميوم) ==================
 $user = Auth::user();
 
 $hasActiveSub = false;
@@ -64,6 +69,7 @@ if (method_exists($user, 'subscriptions')) {
 }
 
 if (!$hasActiveSub) {
+    // عدّ جميع الطلبات التي أنشأها المستخدم بغض النظر عن الحالة
     $totalRequests = DB::table('exchanges')
         ->where('sender_id', $senderId)
         ->count();
@@ -78,6 +84,7 @@ if (!$hasActiveSub) {
         return back()->withErrors(['skill_limit' => $msg])->withInput();
     }
 }
+// ================== نهاية فحص السقف ==================
 
 
     $ex = Exchange::create([
@@ -130,6 +137,7 @@ public function acceptTeachOnly(Request $req, Conversation $conversation, Exchan
             : abort(403);
     }
 
+    // 👈 نفس accept لكن منزيح sender_skill_id
     $exchange->update([
         'sender_skill_id' => null,
         'status'          => 'accepted',

@@ -13,11 +13,13 @@ class UserController extends Controller
      */
  public function index()
 {
+    // جلب جميع المستخدمين الذين لديهم الدور "user" فقط (استبعاد الإداريين)
 $users = User::with('country')
     ->where('role', 'user')
     ->paginate(5);
 
 
+    // تمرير البيانات إلى صفحة العرض داخل resources/views/admin/users/index.blade.php
     return view('admin.users.index', compact('users'));
 }
 

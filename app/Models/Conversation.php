@@ -36,6 +36,7 @@ class Conversation extends Model
         return $this->hasMany(\App\Models\Exchange::class);
     }
 
+    /** عدد الرسائل المحتسَبة للتقييم (≥ 7 أحرف) */
     public function eligibleMessagesCount(): int
     {
         return (int) $this->messages()
@@ -43,6 +44,7 @@ class Conversation extends Model
             ->count();
     }
 
+    /** هل تحقّق شرط فتح التقييم (12 رسالة مجتمعة بطول ≥ 7)؟ */
     public function canTriggerReview(): bool
     {
         return $this->eligibleMessagesCount() >= 12;

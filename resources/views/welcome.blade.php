@@ -26,7 +26,7 @@
   {{-- Open Graph --}}
   <meta property="og:title" content="{{ $TITLE }}">
   <meta property="og:description" content="{{ $DESC }}">
-  <meta property="og:image" content="{{ url(asset('img/logo.png')) }}">
+  <meta property="og:image" content="{{ url(asset('favicon.ico')) }}">
   <meta property="og:url" content="{{ url('/') }}">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_US"> {{-- بدك عربي؟ ممكن تضيف ar_JO كمان --}}
@@ -37,7 +37,7 @@
     "@context": "https://schema.org",
     "@type": "Organization",
     "url": "{{ url('/') }}",
-    "logo": "{{ url(asset('img/logo.png')) }}",
+    "logo": "{{ url(asset('favicon.ico')) }}",
     "name": "Maharat Hub",
     "alternateName": "مهارات هب",
     "description": "منصة لتبادل المهارات والمعرفة عالميًا. تواصل مع أشخاص لتتعلم وتشارك خبراتك مجانًا.",

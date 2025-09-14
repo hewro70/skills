@@ -3,8 +3,14 @@
 
 @push('styles')
 <style>
-  .invite-card{ border:1px solid #e9ecef; border-radius:14px; }
-  .invite-avatar{ width:44px; height:44px; border-radius:50%; object-fit:cover; }
+.invite-card{ border:1px solid #e9ecef; border-radius:14px; }
+.invite-avatar{ width:44px; height:44px; border-radius:50%; object-fit:cover; cursor:pointer; }
+.invite-link{ color:inherit; text-decoration:none; }
+.invite-link:hover .invite-name-link{ text-decoration:underline; }
+
+
+
+
 </style>
 @endpush
 
@@ -13,42 +19,59 @@
     <h4 class="mb-4 text-center">{{ __('invitations.title_received') }}</h4>
 
     @forelse($invitations as $invitation)
-      @php
-        $sender      = $invitation->sourceUser;
-        $senderName  = $sender?->fullName() ?? __('common.user');
-        $avatar      = $sender?->image_url ?? asset('img/avatar-placeholder.png');
+    @php
+  $sender      = $invitation->sourceUser;
+  $senderName  = $sender?->fullName() ?? __('common.user');
+  // خليه متوافق مع صفحة التالنت:
+  $profileUrl  = $sender ? route('theme.profile.show', $sender) : null;
 
-        // تاريخ العرض حسب لوكال التطبيق
-        $dt   = $invitation->date_time ?? $invitation->created_at;
-        $date = $dt ? $dt->locale(app()->getLocale())->isoFormat('YYYY-MM-DD HH:mm') : '';
+  $avatar = $sender
+    ? ($sender->getImageUrlAttribute() ?? $sender->image_url ?? asset('img/avatar-placeholder.png'))
+    : asset('img/avatar-placeholder.png');
 
-        // نص الرسالة: إن وُجدت رسالة المرسل (بريميوم) نعرضها، غير هيك نظهر رسالة النظام
-        $text = filled($invitation->message)
-                  ? $invitation->message
-                  : __('invitations.free.system_notice', ['name' => $senderName]);
+  $dt   = $invitation->date_time ?? $invitation->created_at;
+  $date = $dt ? $dt->locale(app()->getLocale())->isoFormat('YYYY-MM-DD HH:mm') : '';
 
-        // نحاول نجيب conversation id لو الدعوة مقبولة، عشان نعرض زر "فتح المحادثة"
-        $conversationId = null;
-        if ($invitation->reply === 'قبول') {
-          $meId    = auth()->id();
-          $otherId = $invitation->source_user_id;
-          $conv = \App\Models\Conversation::whereHas('users', fn($q)=>$q->where('users.id', $meId))
-                  ->whereHas('users', fn($q)=>$q->where('users.id', $otherId))
-                  ->first();
-          $conversationId = $conv?->id;
-        }
-      @endphp
+  $text = filled($invitation->message)
+            ? $invitation->message
+            : __('invitations.free.system_notice', ['name' => $senderName]);
+
+  // conversation id…
+  $conversationId = null;
+  if ($invitation->reply === 'قبول') {
+    $meId    = auth()->id();
+    $otherId = $invitation->source_user_id;
+    $conv = \App\Models\Conversation::whereHas('users', fn($q)=>$q->where('users.id', $meId))
+            ->whereHas('users', fn($q)=>$q->where('users.id', $otherId))
+            ->first();
+    $conversationId = $conv?->id;
+  }
+@endphp
+
 
       <div class="card mb-3 shadow-sm invite-card" data-id="{{ $invitation->id }}">
         <div class="card-body">
           <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-              <img class="invite-avatar" src="{{ $avatar }}" alt="{{ $senderName }}">
-              <div>
-                <h6 class="mb-0 fw-bold">{{ $senderName }}</h6>
-                <small class="text-muted">{{ __('invitations.sent_at', ['date' => $date]) }}</small>
-              </div>
-            </div>
+<div class="d-flex align-items-center gap-2">
+  @if ($profileUrl)
+    <a href="{{ $profileUrl }}" class="d-flex align-items-center text-decoration-none invite-link"
+       aria-label="{{ $senderName }}" rel="author">
+      <img class="invite-avatar" src="{{ $avatar }}" alt="{{ $senderName }}" loading="lazy">
+      <div class="ms-2">
+        <h6 class="mb-0 fw-bold invite-name-link">{{ $senderName }}</h6>
+        <small class="text-muted">{{ __('invitations.sent_at', ['date' => $date]) }}</small>
+      </div>
+    </a>
+  @else
+    <img class="invite-avatar" src="{{ $avatar }}" alt="{{ $senderName }}" loading="lazy">
+    <div class="ms-2">
+      <h6 class="mb-0 fw-bold">{{ $senderName }}</h6>
+      <small class="text-muted">{{ __('invitations.sent_at', ['date' => $date]) }}</small>
+    </div>
+  @endif
+</div>
+
+
 
             <div class="ms-2">
               @if ($invitation->reply)

@@ -30,8 +30,10 @@ public function store(LoginRequest $request): RedirectResponse
 
     $user = $request->user();
 
+    // عدّل الشرط حسب سكيمتك (role='admin' أو is_admin=true)
     $isAdmin = (($user->role ?? null) === 'admin') || (bool)($user->is_admin ?? false);
 
+    // لو كان فيه intended URL نحو /admin والمستخدم "مش" أدمن، احذفه حتى ما يصير 403
     $intended = $request->session()->get('url.intended');
     if (!$isAdmin && is_string($intended)) {
         $path = parse_url($intended, PHP_URL_PATH) ?? '';
@@ -40,11 +42,14 @@ public function store(LoginRequest $request): RedirectResponse
         }
     }
 
+    // الأدمن → admin.dashboard ، غير الأدمن → theme.index
     return redirect()->intended($isAdmin ? route('admin.dashboard') : route('theme.index'));
 }
 
 
-
+    /**
+     * Destroy an authenticated session.
+     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

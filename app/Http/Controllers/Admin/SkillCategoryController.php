@@ -12,9 +12,11 @@ class SkillCategoryController extends Controller
 {
     public function index()
 {
+    // للعرض في الجداول
     $classifications = \App\Models\Classification::orderByDesc('id')->paginate(10);
     $skills = \App\Models\Skill::with('classification')->orderByDesc('id')->paginate(10);
 
+    // للـ <select> (بدون paginate)
     $locale = app()->getLocale();
     $classificationOptions = \App\Models\Classification::orderByRaw(
         "LOWER(JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"$locale\"')))"
@@ -28,7 +30,9 @@ class SkillCategoryController extends Controller
 }
 
 
-
+    /* =======================
+       Classifications
+       ======================= */
     public function storeClassification(Request $request)
     {
         $data = $request->validate([
@@ -70,6 +74,7 @@ class SkillCategoryController extends Controller
 
     public function destroyClassification(Classification $classification)
     {
+        // منع الحذف إذا عليه مهارات
         if ($classification->skills()->exists()) {
             return back()->with('error', 'لا يمكن حذف التصنيف لارتباطه بمهارات.');
         }
@@ -78,7 +83,9 @@ class SkillCategoryController extends Controller
         return back()->with('success', 'تم حذف التصنيف.');
     }
 
-
+    /* =======================
+       Skills
+       ======================= */
     public function storeSkill(Request $request)
     {
         $data = $request->validate([
@@ -126,7 +133,10 @@ class SkillCategoryController extends Controller
 
     public function destroySkill(Skill $skill)
     {
-    
+        // لو بدك تمنع الحذف عند وجود علاقات (user_skills / exchanges) فعّل الشرط
+        // if ($skill->users()->exists() || $skill->taughtExchanges()->exists() || $skill->learnedExchanges()->exists()) {
+        //     return back()->with('error', 'لا يمكن حذف المهارة لارتباطها بسجلات.');
+        // }
 
         $skill->delete();
         return back()->with('success', 'تم حذف المهارة.');
